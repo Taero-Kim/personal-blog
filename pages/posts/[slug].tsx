@@ -1,21 +1,19 @@
-import type { GetStaticPaths, GetStaticProps, NextPage } from "next";
-import { readdirSync } from "fs";
-import matter from "gray-matter";
+import Head from "next/head";
 import { serialize } from "next-mdx-remote/serialize";
-import { MDXRemote, MDXRemoteSerializeResult } from "next-mdx-remote";
-import { IPost } from "@type/posts";
+import { MDXRemote } from "next-mdx-remote";
+import { useEffect } from "react";
+
+import type { GetStaticPaths, GetStaticProps, NextPage } from "next";
+import { PostDetailProps } from "@type/posts";
+
 import PostTopSection from "@components/post/PostTopSection";
 import PostBottomSection from "@components/post/PostBottomSection";
 import PostImage from "@components/mdx/PostImage";
-import Head from "next/head";
+
+import { readdirSync } from "fs";
+import matter from "gray-matter";
 import hljs from "highlight.js";
 import javascript from "highlight.js/lib/languages/javascript";
-import { useEffect } from "react";
-
-interface IPostDetailProps {
-  mdxContent: MDXRemoteSerializeResult<Record<string, unknown>>;
-  data: IPost;
-}
 
 const components = {
   PostImage,
@@ -23,10 +21,10 @@ const components = {
 
 hljs.registerLanguage("javascript", javascript);
 
-const PostDetail: NextPage<IPostDetailProps> = ({
+const PostDetail: NextPage<PostDetailProps> = ({
   mdxContent,
   data,
-}: IPostDetailProps) => {
+}: PostDetailProps) => {
   useEffect(() => {
     hljs.initHighlighting();
   }, []);

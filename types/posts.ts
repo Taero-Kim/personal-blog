@@ -1,3 +1,5 @@
+import { MDXRemoteSerializeResult } from "next-mdx-remote";
+
 export interface Post {
   title: string;
   content: string;
@@ -20,5 +22,10 @@ export interface Posts {
 }
 
 export interface PostTopSectionProps {
+  data: Post;
+}
+
+export interface PostDetailProps {
+  mdxContent: MDXRemoteSerializeResult<Record<string, unknown>>;
   data: Post;
 }
