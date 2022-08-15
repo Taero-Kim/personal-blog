@@ -1,0 +1,78 @@
+import type { GetStaticPaths, GetStaticProps, NextPage } from "next";
+import { readdirSync } from "fs";
+import matter from "gray-matter";
+import { serialize } from "next-mdx-remote/serialize";
+import { MDXRemote, MDXRemoteSerializeResult } from "next-mdx-remote";
+import { IPost } from "@type/posts";
+import PostTopSection from "@components/post/PostTopSection";
+import PostBottomSection from "@components/post/PostBottomSection";
+import PostImage from "@components/mdx/PostImage";
+import Head from "next/head";
+import hljs from "highlight.js";
+import javascript from "highlight.js/lib/languages/javascript";
+import { useEffect } from "react";
+
+interface IPostDetailProps {
+  mdxContent: MDXRemoteSerializeResult<Record<string, unknown>>;
+  data: IPost;
+}
+
+const components = {
+  PostImage,
+};
+
+hljs.registerLanguage("javascript", javascript);
+
+const PostDetail: NextPage<IPostDetailProps> = ({
+  mdxContent,
+  data,
+}: IPostDetailProps) => {
+  useEffect(() => {
+    hljs.initHighlighting();
+  }, []);
+
+  return (
+    <>
+      <Head>
+        <link
+          rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/base16/dracula.min.css"
+        ></link>
+      </Head>
+
+      <PostTopSection data={data} />
+      <div className="mx-auto mb-12 max-w-[1080px] px-4 md:px-0">
+        <div className="prose-headings:text-black30 prose max-w-none prose-p:text-black20">
+          <MDXRemote {...mdxContent} components={components} />
+        </div>
+      </div>
+      <PostBottomSection data={data} />
+    </>
+  );
+};
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  const fileList = readdirSync("./posts").map((fileName) => {
+    const fileNameRoute = fileName.replace(".mdx", "");
+    return { params: { slug: fileNameRoute } };
+  });
+
+  return {
+    paths: fileList,
+    fallback: false,
+  };
+};
+
+export const getStaticProps: GetStaticProps = async (context) => {
+  const { data, content } = matter.read(`./posts/${context?.params?.slug}.mdx`);
+  const mdxContent = await serialize(content);
+
+  return {
+    props: {
+      mdxContent,
+      data,
+    },
+  };
+};
+
+export default PostDetail;

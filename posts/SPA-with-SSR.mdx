@@ -1,0 +1,148 @@
+---
+title: SPA로 SSR 구현하기
+date: 2022.08.14
+author: strange
+slogan: 세상을 이롭게 하는 개발자가 되고 싶습니다.
+tags: "#SPA #SSR #SSG #Next.js"
+category: tech
+content: 우리에게 익숙한 React는 Single Page Application (이하 SPA) 구현을 위한 Javascript 프레임워크입니다. 여기에서 Page는 HTML / CSS / JS로 이뤄진 문서입니다. 이런 페이지가 하나라면 SPA, 여러 개라면 MPA (Multiple Page Application) 라고 할 수 있습니다.
+thumbnail: https://cdn.discordapp.com/attachments/996456164634144848/1008282899793068122/SPA_SSR__2.png
+---
+
+## 들어가며
+
+우리에게 익숙한 React는 Single Page Application (이하 SPA) 구현을 위한 Javascript 프레임워크입니다. 여기에서 Page는 HTML / CSS / JS로 이뤄진 문서입니다. 이런 페이지가 하나라면 SPA, 여러 개라면 MPA (Multiple Page Application) 라고 할 수 있습니다. 여기에서 SPA는 동적 페이지, MPA는 정적 페이지의 개념으로 확장할 수 있습니다.
+
+## SPA와 MPA
+
+여러 페이지가 미리 준비된 MPA는 필요한 페이지를 가져다 사용자에게 보여줍니다. 클라이언트 입장에서 하는 일은 그저 만들어진 페이지를 보여 주는 것 뿐입니다. 반대로 서버는 매우 바쁘겠죠? 바로 Server Side Rendering입니다. 클라이언트와 서버 간의 통신은 페이지 요청 밖에 없습니다. 매우 정적이죠? 바로 정적 페이지입니다.
+
+SPA는 MPA와 달리 페이지가 단 한개입니다. 하나의 페이지이지만 페이지를 구성하는 각 조각들이 사용자의 요청에 따라 서버와 따로 통신을 합니다. AJAX의 개념을 간단하게 이해해 볼 수 있습니다.
+
+아래 이미지의 상단 이미지에서 보듯이 MPA에서 클라이언트는 Page를 새로 고침하여 불러오는 일만 할 뿐, 서버에서 다양한 페이지를 렌더링하여 보내주고 있습니다.
+
+반면, 하단 이미지에서 보듯이 SPA에 경우 최초의 페이지가 클라이언트에 의해 렌더링된 이후에 AJAX를 통해 서버와 동적으로 통신합니다.
+
+![](https://velog.velcdn.com/images/jonghwan2_y/post/21e73592-78bf-429c-afe7-805dbdc60c1c/image.png)
+
+> 주의: 그렇다고 SPA === CSR, MPA === SSR으로 이해하면 안 됩니다. SPA, MPA는 웹페이지의 구성 방식이고 CSR, SSR은 렌더링 방식입니다.
+
+### CSR vs SSR
+
+간단하게 두 개념을 정리하고 넘어가봅시다.
+
+_**SSR**_
+서버에서 렌더링을 이미 마치고 클라이언트에서 넘겨주는 방식이기 때문에 첫 페이지 렌더링이 CSR보다 비교적 빠릅니다. 이미 렌더링이 완료된 HTML 페이지가 클라이언트에 보여지는 것이 때문에 검색 엔진에서 해당 페이지의 정보를 쉽게 확인할 수 있습니다. 다만, 사용자의 요청마다 페이지가 매번 요청되기 때문에 사용성이 낮아지게되며, 사용자 경험에 치명적인 영향을 주는 단점이 있습니다.
+
+_**CSR**_
+클라이언트가 서버로부터 받는 페이지는 빈 페이지입니다. 사용자는 클라이언트가 페이지를 렌더링하는 동안 빈 페이지를 볼 수 밖에 없습니다. 첫 렌더링 이후에는 SSR보다 빠르고 효과적인 사용성과 UX를 제공하는 장점이 있습니다. 서버는 데이터를 전송하는 일만 신경쓰면 되기에 서버에 부담을 줄일 수 있다는 점 역시 장점있습니다.
+
+## SPA와 SSR
+
+이제까지 SPA는 CSR 개념과 함께 이해해 보았습니다. Sever Side Rendering으로 SPA를 구현할 수는 없는 건지 궁금합니다. 정답은 가능합니다. 사실 지금 보고 있는 블로그는 SSR로 구현한 SPA 입니다.
+
+React의 경우 정적 마크업 렌더링을 위해 [ReactDOMServer](https://ko.reactjs.org/docs/react-dom-server.html) 기능을 제공하고 있기는 합니다. 이 경우 설정도 복잡하고 러닝 커브가 꽤 있는 편입니다.
+
+우리 블로그는 [Next.js](https://nextjs.org/)를 통해 정적 렌더링을 구현하고 있습니다. 이번 글에서는 어떻게 SPA에 SSR을 구현하는지 소개해 보고자 합니다.
+
+### SSR은 여러 페이지를 서버에서 만드는데 어떻게 SPA죠?
+
+맞는 말입니다. 우리는 SSR은 MPA의 개념과 같이 이해하고 있었습니다. 여러 HTML 페이지를 서버에서 렌더링해 클라이언트에게 넘겨주면 클라이언트는 뷰어의 역할만 하는 거로 알고 있습니다. 그러면 SPA에서 SSR을 구현한다는 것이 어떻게 가능한 걸까요?
+
+이를 이해하기 위해서는 SSR 뿐 아니라 Static Site Generation (또는 Static Generation)과 Pre-rendering이라는 개념을 추가로 이해해야 합니다.
+
+먼저 Pre-rendering 부터 이해를 해보십니다. 미리 가공된 HTML 페이지를 Single Page에 구현하는 Next.js는 Empty HTML을 초기에 렌더링하는 React와 다른 방식으로 CSR을 구현하고 있습니다.
+
+Stactic Generation의 경우 Pre-rendering을 build time에 진행하는 것이라 이해하면 됩니다. 사실 Static Generation은 SSR의 하위 개념이라고 볼 수 있지만, SSR의 경우 클아이언트의 요청 시에만 Pre-rendering 하기 때문에 Pre-rendering의 구현 시점의 차이가 있다는 것을 이해해야 합니다.
+
+즉, Next.js에서 SSR과 SSG의 경우 여러 페이지가 존재하는 MPA의 개념이 아닌 CSR + SSR로 구현한 SPA의 개념으로 이해를 해야 합니다.
+
+![](https://velog.velcdn.com/images/jonghwan2_y/post/86e11ac2-2473-4ffe-96ad-a708f1001dfa/image.png) <em>https://web.dev/rendering-on-the-web/</em>
+
+## Next.js에서 SSG와 SSR 케이스 활용하기
+
+### SSR : 1. getServerSideProps
+
+Server Side Rendering 케이스로 데이터를 가져오기 위해 사용하는 API입니다. Build 여부와 상관없이 데이터가 필요하여 요청할 때마다 데이터를 불러올 수 있습니다. Server Side에서만 사용이 가능하며 클라이언트에서는 실행되지 않습니다.
+
+`getServerSideProps`의 경우 사용자가 요청할 때마다 HTML 페이지를 생성하기 때문에 데이터가 계속 업데이트되어야 하는 경우에 사용하는 것이 효과적입니다.
+
+```jsx
+function Page({ data }) {
+  // Render data...
+}
+
+// This gets called on every request
+export async function getServerSideProps() {
+  // Fetch data from external API
+  const res = await fetch(`https://.../data`);
+  const data = await res.json();
+
+  // Pass data to the page via props
+  return { props: { data } };
+}
+
+export default Page;
+```
+
+### SSG : 1. getStaticProps
+
+Static Site Generation 케이스로 데이터를 가져오기 위해 사용하는 API입니다. 데이터를 빌드 시에 미리 확인하여 정적으로 제공하기 때문에 매우 빠른 속도로 페이지를 렌더링할 수 있습니다. 따라서 매번 요청할 필요가 없는 데이터를 활용할 때 매우 유용하게 사용할 수 있습니다.
+
+> 예: headless CMS로 부터 데이터가 올때
+
+### SSG : 2. getStaticPaths
+
+역시 Static Site Generation 케이스로 데이터를 가져오기 위해 사용하는 API입니다. Next.js에서 제공하는 강력한 기능 중 Dynamic Routes라는 개념이 있습니다. 페이지 폴더 내에 중괄호를 이용하여 파일을 생성하게 되면 params와 같이 요청 URL 경로에 동적으로 데이터 (중괄호 파일에서 활용한 데이터)를 보내어 해당 params에 해당 하는 정보를 getStaticProps로 전달하여 해당 페이지에 렌더링할 수 있는 개념입니다.
+
+getStaticPaths에서 return하는 정보는 2가지 있습니다.
+
+- paths : 빌드타임에 pre-rendering할 경로들입니다.
+- fallback : paths 이외의 경로들에 대해 추후 요청이 들어오면 만들어 줄지 말지 결정하는 옵션입니다.
+
+`getStaticProps`, `getStaticPaths` 의 경우 build time에 pre-rendering됩니다. HTML 페이지가 생성되고 이후 사용자의 요청이 있을 때 빌드된 HTML 페이지를 재사용합니다. 따라서 데이터 fetching이 실시간으로 이뤄지는 경우가 아닐 때 해당 API를 사용하는 것이 효과적입니다. 공식 문서에서 제공하는 아래 예시를 보면 보다 이해하기 쉽습니다.
+
+```jsx
+// pages/posts/[id].js
+
+function Post({ post }) {
+  // Render post...
+}
+
+// This function gets called at build time
+export async function getStaticPaths() {
+  // Call an external API endpoint to get posts
+  const res = await fetch("https://.../posts");
+  const posts = await res.json();
+
+  // Get the paths we want to pre-render based on posts
+  const paths = posts.map((post) => ({
+    params: { id: post.id },
+  }));
+
+  // We'll pre-render only these paths at build time.
+  // { fallback: false } means other routes should 404.
+  return { paths, fallback: false };
+}
+
+// This also gets called at build time
+export async function getStaticProps({ params }) {
+  // params contains the post `id`.
+  // If the route is like /posts/1, then params.id is 1
+  const res = await fetch(`https://.../posts/${params.id}`);
+  const post = await res.json();
+
+  // Pass post data to the page via props
+  return { props: { post } };
+}
+
+export default Post;
+```
+
+## 마치며
+
+Next.js에서 SSG와 SSR을 어떻게 CSR로 구현하는지를 중심으로 글을 적어 보았습니다. 간단히 말해 Next.js는 SSG와 SSR에 따라 페이지를 Pre-rendering할 timing을 정의하고 최초 클라이언트에 페이지가 로드된 이후에는 CSR 방식으로 구현된다는 개념을 이해할 수 있었습니다.
+
+개발하고자 하는 웹페이지가 어떤 목적인지에 따라 다양한 라이브러리와 프레임워크를 선택하는 것은 개발자의 숙명입니다. 어떤 장단점을 가지고 있는지 명확하게 이해를 하고, 내재된 개념을 효과적으로 활용하는 것이 매우 중요합니다.
+
+이 블로그를 준비하면서 Next.js가 가지고 있는 Static Generation 개념을 통해 정적인 markdown 페이지를 관리하는 방법을 학습할 수 있었습니다. 앞으로 더욱 다양한 Next.js의 기능을 활용하여 블로그 뿐 아니라 다양한 목적의 웹페이지를 개발해 보고 싶다는 욕심도 생기게 되었습니다.
