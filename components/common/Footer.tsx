@@ -1,18 +1,16 @@
-import Image from "next/image";
+import ChatIcon from "assets/ChatIcon";
+import EmailIcon from "assets/EmailIcon";
+import GithubIcon from "assets/GithubIcon";
 
 const Footer = () => {
   return (
-    <div className="relative flex w-full items-center justify-center border border-[#EBEBEB] bg-[#FCFCFC] py-[92px]">
-      <div className="left-[10%] hidden items-center md:absolute md:flex">
-        <Image
-          src="/images/footer/team-logo-gray.svg"
-          alt="logo"
-          width={137}
-          height={49}
-        />
+    <div className="mt-auto flex w-full flex-col items-center justify-center space-y-2 border border-[#EBEBEB] bg-[#FCFCFC] py-[40px] dark:border-darkBg dark:bg-darkBg">
+      <div className="flex items-center space-x-3">
+        <EmailIcon />
+        <GithubIcon />
+        <ChatIcon />
       </div>
-
-      <div className="text-center">© by DEVENGERS All Rights Reserved.</div>
+      <div className="text-center dark:text-darkText">© 2022. Taero Blog</div>
     </div>
   );
 };

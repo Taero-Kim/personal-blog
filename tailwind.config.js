@@ -4,6 +4,7 @@ module.exports = {
   content: [
     "./pages/**/*.{js,ts,jsx,tsx}",
     "./components/**/*.{js,ts,jsx,tsx}",
+    "./assets/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
@@ -13,6 +14,11 @@ module.exports = {
         black60: "#1C1C1C",
         gray20: "#EBEBEB",
         gray100: "#8C8C8C",
+        darkBg: "#323437",
+        darkText: "#F3F4F6",
+        darkPText: "#E5E7EB",
+        darkTag: "#334155",
+        darkInputBg: "#4a5260",
       },
       typography: {
         DEFAULT: {
@@ -41,5 +47,6 @@ module.exports = {
       },
     },
   },
+  darkMode: "class",
   plugins: [require("@tailwindcss/typography")],
 };

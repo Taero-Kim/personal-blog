@@ -1,4 +1,4 @@
-import { IPost } from "@type/posts";
+import { PostTopSectionProps } from "@type/posts";
 import { useRouter } from "next/router";
 import Script from "next/script";
 import React from "react";
@@ -9,11 +9,8 @@ declare global {
     Kakao: any;
   }
 }
-interface IPostTopSectionProps {
-  data: IPost;
-}
 
-const ShareLink = ({ data }: IPostTopSectionProps) => {
+const ShareLink = ({ data }: PostTopSectionProps) => {
   const router = useRouter();
 
   const shareWithKakao = () => {

@@ -1,18 +1,49 @@
-import { IPosts } from "@type/posts";
+import { Posts } from "@type/posts";
 import type { GetStaticProps, NextPage } from "next";
 import { readdirSync, readFileSync } from "fs";
 import matter from "gray-matter";
-import PostList from "@components/PostList";
-import CarouselSlide from "@components/CarouselSlide";
+import PostList from "@components/post/PostList";
+import { useEffect, useState } from "react";
+import SearchBar from "@components/common/SearchBar";
+import Loading from "@components/common/Loading";
+import NoContents from "@components/common/NoContents";
 
-const Home: NextPage<IPosts> = ({ posts }: IPosts) => {
+const Home: NextPage<Posts> = ({ posts }: Posts) => {
+  const [filteredPost, setFilteredPost] = useState(posts);
+  const [keyword, setKeyword] = useState("");
+  const [searching, setSearching] = useState(false);
+
+  useEffect(() => {
+    if (!keyword.length) {
+      setFilteredPost(posts);
+      setSearching(false);
+      return;
+    }
+    setSearching(true);
+
+    const searchAction = setInterval(() => {
+      const searchKeyword = [...posts].filter(
+        (post) =>
+          post.title.toLowerCase().includes(keyword.toLowerCase()) ||
+          post.tags.toLowerCase().includes(keyword.toLowerCase())
+      );
+      setFilteredPost(searchKeyword);
+      setSearching(false);
+    }, 200);
+
+    return () => clearInterval(searchAction);
+  }, [keyword, posts]);
+
   return (
     <>
-      <CarouselSlide />
-      <div className="pt-[48px] pb-5 text-center text-[18px] font-bold leading-[42px] text-[#303030]">
-        최신글
-      </div>
-      <PostList posts={posts} />
+      <SearchBar keyword={keyword} setKeyword={setKeyword} />
+      {searching ? (
+        <Loading />
+      ) : filteredPost.length ? (
+        <PostList posts={filteredPost} />
+      ) : (
+        <NoContents />
+      )}
     </>
   );
 };

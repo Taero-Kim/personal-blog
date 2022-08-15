@@ -1,27 +1,23 @@
 import { useRouter } from "next/router";
-import { Dispatch, SetStateAction, useEffect } from "react";
+import { useEffect } from "react";
+
 import { useRecoilState } from "recoil";
 import { globalNavAtom } from "states/common";
 
-interface IDrawerProps {
-  drawerOpen: "open" | "close" | "animate";
-  setDrawerOpen: Dispatch<SetStateAction<"open" | "close" | "animate">>;
-}
+import { DrawerProps } from "@type/common";
+import CloseButton from "assets/CloseButton";
 
-const Drawer = ({ drawerOpen, setDrawerOpen }: IDrawerProps) => {
+const Drawer = ({ drawerOpen, setDrawerOpen }: DrawerProps) => {
   const navList = [
-    { content: "홈", route: "/" },
-    { content: "디벤져스", route: "/" },
-    { content: "기술", route: "/tech" },
-    { content: "디자인", route: "/design" },
-    { content: "기타", route: "/etc" },
+    { content: "모든 글", route: "/" },
+    { content: "소개", route: "/about" },
   ];
   const router = useRouter();
   const [globalNav, setGlobalNav] = useRecoilState(globalNavAtom);
 
   const drawerClass = () => {
     const defaultClass =
-      "fixed top-0 left-0 z-[100] min-h-[100vh] w-[70%] bg-white pl-[51px] pt-[54px] pr-6 md:hidden ";
+      "fixed top-0 left-0 z-[100] min-h-[100vh] w-[70%] bg-white pl-[51px] pt-[54px] pr-6 md:hidden dark:bg-black60 ";
     if (drawerOpen === "close") {
       return "hidden";
     } else if (drawerOpen === "animate") {
@@ -33,9 +29,9 @@ const Drawer = ({ drawerOpen, setDrawerOpen }: IDrawerProps) => {
 
   const navListClass = (item: string) => {
     const defaultClass =
-      "px-[10px] py-[10px] text-lg leading-[42px] cursor-pointer ";
+      "px-[10px] py-[10px] text-lg leading-[42px] cursor-pointer dark:text-darkText ";
     if (item === globalNav) return defaultClass + "text-black60 font-bold";
-    else return defaultClass + "text-black20 font-normal";
+    else return defaultClass + "text-black20 font-normal dark:font-light";
   };
 
   const onCloseDrawerHandler = () => {
@@ -71,12 +67,13 @@ const Drawer = ({ drawerOpen, setDrawerOpen }: IDrawerProps) => {
 
       <div className={drawerClass()}>
         <div className="mb-8 flex justify-end">
-          <img
+          {/* <img
             className="cursor-pointer"
             onClick={onCloseDrawerHandler}
             src="/images/drawer/close-button.svg"
             alt="close-button"
-          />
+          /> */}
+          <CloseButton onClose={onCloseDrawerHandler} />
         </div>
 
         {navList.map((item, i) => (

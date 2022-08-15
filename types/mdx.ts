@@ -1,5 +1,5 @@
-import React from "react";
-
-export interface IParagraphProps {
-  children: React.ReactNode;
+export interface MdxImageProps {
+  src: string;
+  width: number;
+  alt?: string;
 }

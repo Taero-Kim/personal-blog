@@ -42,7 +42,7 @@ const PostDetail: NextPage<IPostDetailProps> = ({
 
       <PostTopSection data={data} />
       <div className="mx-auto mb-12 max-w-[1080px] px-4 md:px-0">
-        <div className="prose-headings:text-black30 prose max-w-none prose-p:text-black20">
+        <div className="prose-headings:text-black30 prose max-w-none prose-p:text-black20 dark:prose-headings:text-darkText dark:prose-p:text-darkPText dark:prose-a:text-yellow-600 dark:prose-strong:text-pink-500  dark:prose-code:text-green-400">
           <MDXRemote {...mdxContent} components={components} />
         </div>
       </div>

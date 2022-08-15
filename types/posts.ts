@@ -1,4 +1,4 @@
-export interface IPost {
+export interface Post {
   title: string;
   content: string;
   date: string;
@@ -10,11 +10,15 @@ export interface IPost {
   fileName: string;
 }
 
-export interface IPostItemProps {
-  post: IPost;
+export interface PostItemProps {
+  post: Post;
 }
 
-export interface IPosts {
-  posts: IPost[];
+export interface Posts {
+  posts: Post[];
   type?: string;
+}
+
+export interface PostTopSectionProps {
+  data: Post;
 }

@@ -1,19 +1,9 @@
-import { ICarouselContent } from "@type/common";
 import { useState, useRef, UIEvent, ReactElement } from "react";
+import { CarouselContent } from "@type/common";
 
 const CarouselSlide = () => {
   const [currentSlide, setCurrentSlide] = useState<number>(0);
   const slideRef = useRef<HTMLDivElement>(null);
-
-  // const onScrollHandler = (e: UIEvent<Element>) => {
-  //   if (e.currentTarget.scrollLeft === 0) {
-  //     setCurrentSlide(0);
-  //   } else if (e.currentTarget.scrollLeft > 540 && 이게 < 1600) {
-  //     setCurrentSlide(1);
-  //   } else if (e.currentTarget.scrollLeft === 2160) {
-  //     setCurrentSlide(2);
-  //   }
-  // };
 
   const onScrollHandler = (e: UIEvent<Element>) => {
     const scrollLeft = e.currentTarget.scrollLeft; // 왼쪽부터 시작한 기준 스크롤 값 (px)
@@ -29,8 +19,6 @@ const CarouselSlide = () => {
     } else if (scrollLeft > slideWidth * 1.5) {
       setCurrentSlide(2);
     }
-    // console.log("left", e.currentTarget.scrollLeft);
-    // console.log("slideRef", slideRef.current.getBoundingClientRect().width);
   };
 
   const changeSlide = (id: number) => {
@@ -61,7 +49,7 @@ const CarouselSlide = () => {
     }
   };
 
-  const contentsList: ICarouselContent[] | ReactElement = [
+  const contentsList: CarouselContent[] | ReactElement = [
     {
       id: 0,
       title: "voteslug",
