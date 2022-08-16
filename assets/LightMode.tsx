@@ -1,5 +1,3 @@
-import React from "react";
-
 interface LightModeProps {
   onClick?: () => void;
 }
@@ -9,7 +7,7 @@ const LightMode = ({ onClick }: LightModeProps) => {
     <svg
       onClick={onClick}
       xmlns="http://www.w3.org/2000/svg"
-      className="h-6 w-6 cursor-pointer fill-red-300"
+      className="h-6 w-6 animate-toggleLight cursor-pointer fill-red-300"
       viewBox="0 0 20 20"
       fill="currentColor"
     >

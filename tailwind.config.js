@@ -40,10 +40,20 @@ module.exports = {
           "0%": { opacity: 1, transform: "translateX(0%)" },
           "100%": { opacity: 0, transform: "translateX(-50%)" },
         },
+        toggleDark: {
+          "0%": { opacity: 0, transform: "rotate(-45deg)" },
+          "100%": { opacity: 1, transform: "rotate(0deg)" },
+        },
+        toggleLight: {
+          "0%": { opacity: 0, transform: "rotate(0deg)" },
+          "100%": { opacity: 1, transform: "rotate(45deg)" },
+        },
       },
       animation: {
         drawerOpen: "drawerOpen 500ms ease-in-out forwards",
         drawerClose: "drawerClose 500ms ease-in-out forwards",
+        toggleDark: "toggleDark 500ms ease-in-out",
+        toggleLight: "toggleLight 500ms ease-in-out",
       },
     },
   },

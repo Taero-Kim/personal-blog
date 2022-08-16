@@ -1,5 +1,3 @@
-import React, { Dispatch, SetStateAction } from "react";
-
 interface DarkModeProps {
   onClick?: () => void;
 }
@@ -9,7 +7,7 @@ const DarkMode = ({ onClick }: DarkModeProps) => {
     <svg
       onClick={onClick}
       xmlns="http://www.w3.org/2000/svg"
-      className="h-6 w-6 cursor-pointer fill-yellow-300 transition-all"
+      className="h-6 w-6 animate-toggleDark cursor-pointer fill-yellow-300 transition-all"
       fill="none"
       viewBox="0 0 24 24"
       stroke="currentColor"
