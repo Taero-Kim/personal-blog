@@ -1,5 +1,6 @@
 import { readdirSync } from "fs";
 import { GetServerSideProps } from "next";
+import { json } from "stream/consumers";
 
 interface Page {
   location: string;
@@ -29,6 +30,17 @@ export const getServerSideProps: GetServerSideProps = async ({ res }) => {
 
   //   return { location: `/posts/${file}`, lastMod: new Date().toISOString() };
   // });
+  const fetchPosts = await fetch(
+    "https://api.github.com/repos/Taero-Kim/personal-blog/contents/posts"
+  ).then((res) => res.json());
+
+  const dynamicPages = fetchPosts.map((post: any) => {
+    const postName = post.name.replace(".mdx", "");
+    return {
+      location: `/posts/${postName}`,
+      lastMod: new Date().toISOString(),
+    };
+  });
 
   const allPages = [
     {
@@ -39,7 +51,7 @@ export const getServerSideProps: GetServerSideProps = async ({ res }) => {
       location: "/about",
       lastMod: new Date().toISOString(),
     },
-    // ...dynamicPages,
+    ...dynamicPages,
   ];
 
   res.setHeader("Content-Type", "text/xml");
