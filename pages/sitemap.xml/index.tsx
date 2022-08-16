@@ -24,11 +24,11 @@ const generateSitemap = (pages: Page[]) => {
 };
 
 export const getServerSideProps: GetServerSideProps = async ({ res }) => {
-  const dynamicPages = readdirSync("./posts").map((fileName) => {
-    const file = fileName.replace(".mdx", "");
+  // const dynamicPages = readdirSync("./posts").map((fileName) => {
+  //   const file = fileName.replace(".mdx", "");
 
-    return { location: `/posts/${file}`, lastMod: new Date().toISOString() };
-  });
+  //   return { location: `/posts/${file}`, lastMod: new Date().toISOString() };
+  // });
 
   const allPages = [
     {
@@ -39,7 +39,7 @@ export const getServerSideProps: GetServerSideProps = async ({ res }) => {
       location: "/about",
       lastMod: new Date().toISOString(),
     },
-    ...dynamicPages,
+    // ...dynamicPages,
   ];
 
   res.setHeader("Content-Type", "text/xml");
