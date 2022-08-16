@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import SearchBar from "@components/common/SearchBar";
 import Loading from "@components/common/Loading";
 import NoContents from "@components/common/NoContents";
+import Head from "next/head";
 
 const Home: NextPage<Posts> = ({ posts }: Posts) => {
   const [filteredPost, setFilteredPost] = useState(posts);
@@ -36,6 +37,18 @@ const Home: NextPage<Posts> = ({ posts }: Posts) => {
 
   return (
     <>
+      <Head>
+        <title>태로 블로그</title>
+        <meta charSet="UTF-8" />
+        <meta name="description" content={"좋은 개발자로 성장하고 싶습니다."} />
+        <meta
+          property="og:image"
+          content="https://cdn.discordapp.com/attachments/1002228584401870871/1008936551461441556/OG.png"
+        />
+        <meta property="og:url" content="https://taero.blog" />
+        <meta property="og:description" content="태로의 개발 공부 여정" />
+        <meta property="og:title" content="태로샐러드" />
+      </Head>
       <SearchBar keyword={keyword} setKeyword={setKeyword} />
       {searching ? (
         <Loading />

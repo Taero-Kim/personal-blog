@@ -32,6 +32,9 @@ const PostDetail: NextPage<PostDetailProps> = ({
   return (
     <>
       <Head>
+        <title>{data.title}</title>
+        <meta charSet="UTF-8" />
+        <meta name="description" content={`${data.content}`} />
         <link
           rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/base16/dracula.min.css"
