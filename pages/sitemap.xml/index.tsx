@@ -49,8 +49,8 @@ export const getServerSideProps: GetServerSideProps = async ({ res }) => {
   return { props: {} };
 };
 
-const Sitemap = () => {
-  return;
+const Sitemap = (): null => {
+  return null;
 };
 
 export default Sitemap;
