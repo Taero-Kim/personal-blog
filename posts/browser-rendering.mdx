@@ -1,0 +1,90 @@
+---
+title: 브라우저 렌더링 순서
+date: 2022.08.13
+author: hulk
+slogan: 즐겁게 코딩하고 항상 성장하고 싶은 개발자입니다.
+tags: "#DOM #Browser-rendering"
+category: tech
+content: React에서 제공하는 Portals는 이런 경우 좋은 해결법이 될 수 있습니다. Portals는 기본적으로 상하 관계 구조를 가지고 있는 DOM에서 자식 컴포넌트를 부모 컴포넌트 밖에 있는 다른 컴포넌트로 전달할 수 있습니다. 사용법은 아주 간단합니다.
+thumbnail: https://cdn.discordapp.com/attachments/1002228584401870871/1009005334662221894/browser-rendering.png
+---
+
+## 배경지식 1) DOM이란?
+
+> 문서 객체 모델(The Document Object Model, 이하 DOM) 은 HTML, XML 문서의 프로그래밍 interface 이다. DOM은 문서의 구조화된 표현(structured representation)을 제공하며 프로그래밍 언어가 DOM 구조에 접근할 수 있는 방법을 제공하여 그들이 문서 구조, 스타일, 내용 등을 변경할 수 있게 돕는다. DOM 은 nodes와 objects로 문서를 표현한다. 이들은 웹 페이지를 스크립트 또는 프로그래밍 언어들에서 사용될 수 있게 연결시켜주는 역할을 담당한다.
+> [MDN DOM의 정의](https://developer.mozilla.org/ko/docs/Web/API/Document_Object_Model/Introduction)
+
+위는 MDN에 작성되어 있는 DOM의 정의입니다.
+저 글을 제가 이해한 바로 조금 쉽게 재정리해 보자면, DOM은 웹페이지의 요소들을 프로그래밍 언어로 제어, 조작할 수 있도록 존재하는 객체 형식의 모델이라는 얘기입니다.
+
+DOM은 트리 형태의 Node 오브젝트로 표현됩니다.
+
+- 브라우저가 HTML을 읽으면, 브라우저는 HTML에 작성되어 있는 요소들을 자바스크립트의 Node 오브젝트로 변환합니다. 브라우저가 이해할 수 있는 자신들만의 오브젝트(객체) 형식으로 변환하는 것이죠.
+  그럼으로써 비로소 자바스크립트로 브라우저를 제어할 수 있게 됩니다.
+
+## 배경지식 2) EventTarget, Node의 관계
+
+![](https://velog.velcdn.com/images/taero30/post/e0953462-8500-4db5-9ede-b9c0304439cf/image.png)
+위 그림은 브라우저에서 EventTarget과 Node 그리고 Element 인터페이스의 상속 관계를 나타냅니다.
+
+각각의 HTML 요소들은 Element로 변환이 되는데 그것들은 모두 Node를 상속하고, 그 Node들은 모두 EventTarget을 상속합니다.
+(참고로 Element뿐만 아니라 document, text 등도 Node의 인터페이스를 상속 받습니다.)
+
+EventTarget의 인터페이스를 상속한다는 것은 곧 EventTarget의 api를 사용할 수 있다는 말인데요, EventTarget 객체에는 3가지의 메서드가 존재합니다.
+
+- EventTarget.addEventListener()
+- EventTarget.removeEventListener()
+- EventTarget.dispatchEvent()
+
+결국 이러한 상속관계 때문에, 모든 Node들 (document를 비롯한 다양한 HTML Element들)에서 위와 같은 EventTarget의 api를 사용할 수 있게 됩니다.
+
+## 배경지식 3) CSSOM
+
+브라우저가 HTML 파일을 DOM으로 만들면, 우리가 정의한 CSS 속성들이나 브라우저 자체에 적용되어 있는 기본 CSS 등 모든 스타일 정보들을 병합하여 cascading rule에 따른 CSS Object Model을 만들게 됩니다. 이를 CSSOM이라고 부릅니다.
+DOM 트리와 비슷하게 CSS 스타일의 트리가 하나 생기게 되는 것입니다.
+이렇게 DOM과 CSSOM이 생성되면 이 둘을 합쳐서 Render Tree가 만들어집니다. 이 Render Tree에는 실제로 브라우저에 표현될 요소들만 나타나게 됩니다.
+
+# 브라우저 렌더링 순서
+
+브라우저와 서버와의 요청과 응답은 간소화하고 그 뒤에 브라우저가 HTML을 받아와 표현하는 과정에 초점을 맞추어 정리해 보겠습니다.
+
+### Construction
+
+1. 브라우저가 서버에 HTML을 요청하고 서버가 응답합니다.
+2. 브라우저가 데이터를 받아와서 HTML을 한 줄 한 줄 읽습니다.
+3. HTML의 요소들을 브라우저가 제어할 수 있는 DOM으로 변환합니다.
+4. CSS의 요소들을 CSSOM으로 변환합니다.
+5. 브라우저에 실제로 표현하기 위해 DOM과 CSSOM을 병합하여 Rendering Tree를 생성합니다.
+
+여기까지의 과정 즉, HTML을 브라우저가 이해할 수 있도록 변환한 뒤 Rendering Tree를 만드는 과정까지를 Construction 파트라고 합니다.
+
+그다음 이 Construction 과정에서 만들어진 Rendering Tree를 이용해서 구조를 짜고 요소들의 배치를 계산하여 브라우저의 window에 그림을 그려주는 Operation 파트 과정이 시작됩니다.
+
+### Operation
+
+1. Layout
+   이 시점에서는 이미 construction 파트에서 만들어진 Rendering Tree에 최종적으로 계산된 CSS 스타일이 포함되어 있습니다. 그 정보들을 기반으로 요소들이 어디에 얼마나 크게 배치되어야 할지(레이아웃에 대한 정보) 등을 계산합니다.
+2. Paint
+   여기서는 앞에서 계산된 요소들을 실제로 브라우저에 바로 그리는 것이 아니라, 각각의 부분들을 작은 단위로 나누어 레이어를 구성합니다. 포토샵에서 사진 편집 시 사용하는 레이어의 개념과 유사하다고 볼 수 있습니다. 이 작은 단위로 나누는 기준은 브라우저마다 다르고 스타일 등의 다양한 속성값들에 따라 달라집니다.
+   이 과정이 있는 이유는 예를 들어 웹 페이지에서 특정 요소의 스타일이 변화할 때, 그 부분만 다른 레이어로 관리하면 다른 레이어에 영향을 끼치지 않고 그 레이어만 변경시킬 수 있기 때문에, 브라우저의 자체적인 성능 개선을 위한 과정이라고 생각하면 좋을 것 같습니다.
+3. Composition
+   2번 Paint 과정에서 준비된 레이어들을 이제 하나씩 표기하는 과정이 이 Composition 과정입니다.
+
+이렇게 크게 Construction과 Operation 과정을 통틀어 Critical Rendering Path(CRP)라 지칭합니다.
+![](https://cdn.discordapp.com/attachments/996456164634144848/996456327205376050/2022-07-13_1.41.35.png)
+
+지금까지 본 Critical Rendering Path를 도식화하면 위와 같습니다.
+
+### 렌더링 퍼포먼스 개선
+
+대부분의 경우에 체감되는 차이는 아니겠지만
+Construction 단계에서는 예를 들어 불필요한 Html 태그 사용을 줄여, 생성되는 Node의 개수를 줄이거나 CSS를 최소화하는 방법으로 조금이라도 사용자에게 빠르게 페이지를 보여줄 수 있겠습니다.
+
+Operation 단계에서도 동적으로 CSS가 변하는 상황에서, Layout, Paint, Composite 이 세 단계가 모두 다시 이루어지는 게 아니라, 최대한 Composite만 이루어질 수 있도록 하는 것이 브라우저 퍼포먼스에 조금이라도 좋은 영향을 끼칩니다.
+그러기 위해서는 상황에 맞게 CSS 속성을 적절하게 사용해야 합니다.
+예를 들어 어떤 요소를 움직이는데,
+css position 속성을 변경시키는 방법은 Paint와 Composite 과정을 모두 재수행 시키지만, 똑같은 것을 css의 transform translate 속성을 사용하면 composite만 수행되도록 할 수 있습니다.
+
+이러한 CSS의 발생, 업데이트에 따른 Layout, Paint, Composite의 재수행 여부는 아래 사이트에 브라우저별로 잘 정리가 되어있습니다.
+프론트엔드 개발시에 참고하면 퍼포먼스 개선 등에 아주 큰 도움이 될 것 같습니다.
+👉 [css trigers link](https://csstriggers.com/)
