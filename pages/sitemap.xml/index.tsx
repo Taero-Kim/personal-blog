@@ -1,6 +1,4 @@
-import { readdirSync } from "fs";
 import { GetServerSideProps } from "next";
-import { json } from "stream/consumers";
 
 interface Page {
   location: string;

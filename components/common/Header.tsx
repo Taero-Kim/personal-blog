@@ -63,12 +63,7 @@ const Header = ({ dark, setDark }: HeaderProps) => {
                   {item.content}
                 </div>
               ))}
-              {/* <button
-                onClick={() => setDark(!dark)}
-                className={toggleClass(dark)}
-              >
-                dark mode
-              </button> */}
+
               {dark ? (
                 <LightMode onClick={() => setDark(false)} />
               ) : (
