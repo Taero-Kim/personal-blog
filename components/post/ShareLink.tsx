@@ -52,7 +52,7 @@ const ShareLink = ({ data }: PostTopSectionProps) => {
           window.Kakao.isInitialized();
         }}
       />
-      <div className="mb-[46px] flex justify-center space-x-4">
+      <div className="mb-[20px] flex justify-center space-x-4">
         <div
           onClick={shareWithKakao}
           className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-gray20"

@@ -1,0 +1,252 @@
+---
+title: 이벤트 캡처링, 버블링
+date: 2022.08.10
+author: hulk
+slogan: 즐겁게 코딩하고 항상 성장하고 싶은 개발자입니다.
+tags: "#event #browser"
+category: tech
+content: 이때 async와 await라는 특별한 문법을 사용하면 Promise를 조금 더 깔끔하게 사용할 수 있습니다. 마치 동기식으로 코드를 작성하는 것처럼 간편하게 코드를 작성할 수 있도록 도와줍니다.
+thumbnail: https://cdn.discordapp.com/attachments/1002228584401870871/1009383974793125898/async.png
+---
+
+## 이벤트란 무엇인가?
+
+이벤트는 브라우저에서 발생할 수 있는 일련의 모든 사건들을 뜻합니다. 그 사건은 유저의 클릭이 될 수도 있고, 스크롤이 될 수도 있고, 웹 페이지의 성공적인 로드, 심지어 에러가 발생한 것이 될 수도 있습니다. 이처럼 종류가 아주 다양하죠.
+[MDN Event의 종류](https://developer.mozilla.org/ko/docs/Web/Events)
+
+## 이벤트 핸들러
+
+이벤트 핸들러는 이와 같은 이벤트들이 발생했을 때 무언가 동작하도록 만든 코드라고 볼 수 있습니다.
+그 코드를 통해 특정 이벤트가 발생했을 때 원하는 기능이 구현되도록 할 수 있죠.
+
+그렇다면 브라우저의 이벤트는 어떻게 감지하며, 그에 따른 동작을 어떻게 정의할까요?
+
+### 그전에,
+
+우선 브라우저에 표시되는 html 등 모든 마크업 문서의 요소들(html 태그 등)은 브라우저가 이해할 수 있는 자바스크립트 Node로 변환되는데, 모든 Node들은 EventTarget을 상속합니다.
+그 관계 때문에 모든 Node들, 그 Node를 상속하는 모든 Element들 또한 EventTarget을 상속합니다.
+EventTarget은 이벤트를 감지하고 그에 따른 이벤트 핸들러를 등록할 수 있는 메서드를 지원하는데 모든 요소들이 그 메서드를 사용할 수 있다는 뜻이기도 하죠.
+
+👉 DOM에 관한 더 자세한 내용이 궁금하시다면 아래 포스팅을 참고해 주세요.<br />
+[태로 블로그 : 브라우저 렌더링 순서](http://localhost:3000/posts/browser-rendering)
+
+## addEventListner()
+
+이벤트를 감지하고 그에 따른 동작을 정의하는 방법은 몇 가지가 있지만 그중 EventTarget 객체에서 지원하는 addEventListener만 간단하게 살펴보겠습니다.
+
+```js
+addEventListner(type, listner, options);
+```
+
+위와 같이 첫 번째 인자에는 이벤트의 타입을(클릭, 마우스 오버 등)
+두 번째 인자에는 그 이벤트가 발생했을 때 동작시킬 함수를,
+세 번째 인자에는 몇 가지 옵션을 넣을 수 있습니다.
+
+클릭을 예로 들어 아주 간단하게 예시를 보면
+
+```html
+<button id="test">버튼</button>
+
+<script>
+  const test = document.getElementById("test");
+
+  test.addEventListener("click", () => {
+    console.log("Hello, Hulk");
+  });
+</script>
+```
+
+위처럼 작성하면 id가 test인 버튼에 "클릭"이벤트가 발생했을 때 브라우저의 콘솔에 "Hello, Hulk"가 출력됩니다.
+
+그런데 세 번째 인자가 빠져있죠? 옵션이기 때문에 생략 가능합니다.
+이 세 번째 인자에 들어가는 옵션에는 가능한 몇 가지가 있는데,
+그중 우리는 capture라는 옵션을 볼 것입니다.
+capture의 기본 값은 `false`입니다. 그런데 capture가 뭘까요?
+
+## 이벤트 캡처링
+
+부모 요소로부터 자식 요소로 이벤트가 전파됩니다.
+
+```html
+<body id="grandParent">
+  <div id="parent">
+    <button id="child">test</button>
+  </div>
+</body>
+
+<script>
+  const grandParent = document.getElementById("grandParent");
+  const parent = document.getElementById("parent");
+  const child = document.getElementById("child");
+
+  child.addEventListener(
+    "click",
+    () => {
+      console.log(
+        `child: ${event.currentTarget.nodeName}, ${event.target.nodeName}`
+      );
+    },
+    { capture: true }
+  );
+
+  parent.addEventListener(
+    "click",
+    () => {
+      console.log(
+        `parent: ${event.currentTarget.nodeName}, ${event.target.nodeName}`
+      );
+    },
+    { capture: true }
+  );
+
+  grandParent.addEventListener(
+    "click",
+    () => {
+      console.log(
+        `grandParent: ${event.currentTarget.nodeName}, ${event.target.nodeName}`
+      );
+    },
+    { capture: true }
+  );
+</script>
+```
+
+위의 예시를 보면 3개의 요소가 있고, 각각 부모와 자식 관계를 맺고 있습니다.
+그리고 모든 요소에는 이벤트 핸들러가 등록이 되어 있는 상태입니다.
+다만 특이한 점은, 이번엔 `addEventListner`의 세 번째 인자 옵션에 capture를 true로 설정했습니다.
+간단하게 그림으로 표현해 보면 아래와 같은 상황입니다.
+![](https://velog.velcdn.com/images/taero30/post/a3194ecf-5e23-4f63-bceb-d0b5c3521016/image.png)
+
+여기서, 제일 자식 요소인 test 버튼을 누르면 어떻게 될까요?
+아래와 같은 결과를 콘솔창에서 확인할 수 있습니다.
+
+```
+// 콘솔창 출력
+grandParent: body, button
+parent: div, button
+child: button, button
+```
+
+부모 요소부터 자식 요소 순으로 결과가 출력되고 있습니다.
+이것이 캡처링(capturing)입니다.
+요소가 중첩되어 있고 모두 이벤트 핸들러가 등록된 상태라면, 이벤트는 부모 컨테이너부터 시작해서 자식 요소 순으로 전파되며, 그에 따라 함수도 그 순서대로 호출됩니다.
+
+## 이벤트 버블링
+
+이벤트 버블링은 캡처링과 반대되는 개념입니다.
+자식 요소로부터 부모 요소로 이벤트 전파
+
+```html
+<body id="grandParent">
+  <div id="parent">
+    <button id="child">test</button>
+  </div>
+</body>
+
+<script>
+  const grandParent = document.getElementById("grandParent")
+   	const parent = document.getElementById("parent")
+   	const child = document.getElementById("child")
+
+   	child.addEventListener("click", () => {
+   		console.log(`child: ${event.currentTarget.nodeName}, ${event.target.nodeName}`)
+   	})
+
+   	parent.addEventListener("click", () => {
+   		console.log(`parent: ${event.currentTarget.nodeName}, ${event.target.nodeName}`)
+   	}
+
+   	grandParent.addEventListener("click", () => {
+   		console.log(`grandParent: ${event.currentTarget.nodeName}, ${event.target.nodeName}`)
+   	})
+</script>
+```
+
+버블링의 경우 `addEventListener`의 세 번째 인자를 생략하여 capture 옵션을 기본값인 `false`로 두었습니다.
+아래와 같은 결과를 콘솔창에서 확인할 수 있습니다.
+
+```
+// 콘솔창 출력
+child: button, button
+parent: div, button
+grandParent: body, button
+```
+
+자식 요소부터 시작해서 부모 요소까지 결과가 출력되고 있습니다.
+이렇게 자식부터 부모로 이벤트가 전파되는 것을 버블링(bubbling)이라고 합니다.
+
+참고) event의 target은 실제로 이벤트가 발생한 지점을 가리키고, currentTarget은 이벤트 핸들러를 가진 요소를 가리킵니다. 그렇기 때문에 콘솔에서 `event.target.nodeName`은 실제로 이벤트가 발생한 지점인 button을 동일하게 가리키는 것입니다.
+
+## 이벤트 전파, 막을 수는 없나?
+
+`event`에서 제공하는 `stopPropagation` 메서드를 쓰면 이벤트 전파를 막을 수 있습니다.
+
+```html
+<body id="grandParent">
+  <div id="parent">
+    <button id="child">test</button>
+  </div>
+</body>
+
+<script>
+  const grandParent = document.getElementById("grandParent")
+   	const parent = document.getElementById("parent")
+   	const child = document.getElementById("child")
+
+   	child.addEventListener("click", () => {
+   		console.log(`child: ${event.currentTarget.nodeName}, ${event.target.nodeName}`)
+   	})
+
+   	parent.addEventListener("click", () => {
+   		console.log(`parent: ${event.currentTarget.nodeName}, ${event.target.nodeName}`)
+   		event.stopPropagation()    // 이벤트 전파 막기
+   	}
+
+   	grandParent.addEventListener("click", () => {
+   		console.log(`grandParent: ${event.currentTarget.nodeName}, ${event.target.nodeName}`)
+   	})
+</script>
+```
+
+위 코드는 버블링의 예시입니다.
+parent 요소의 이벤트 핸들러에 저 메서드를 실행하는 줄을 추가했는데요, 이렇게 되면 parent 요소 이후의 grandParent 요소에는 이벤트가 전파되지 않습니다. (캡처링도 마찬가지로 동작합니다.)
+
+```
+// 콘솔창 출력
+child: button, button
+parent: div, button
+```
+
+하지만 이는 가급적 사용하지 않는 것이 좋습니다. 이벤트 전파를 막는다는 것은 그 이벤트와 관련된 다른 인터렉션을 전혀 동작시키지 않는다는 의미이기 때문에, 예상치 못한 오류가 생길 수 있습니다.
+
+따라서 굳이 이벤트 전파를 막아야 할 때라면 이것보다는 `event`객체의 `target`(실제로 이벤트가 발생한 요소)과 `currentTarget`(이벤트 핸들러를 가진 요소)를 비교하는 식의 해결법이 더 좋을 것 같습니다.
+
+```html
+<body id="grandParent">
+  <div id="parent">
+    <button id="child">test</button>
+  </div>
+</body>
+
+<script>
+  const grandParent = document.getElementById("grandParent")
+   	const parent = document.getElementById("parent")
+   	const child = document.getElementById("child")
+
+   	child.addEventListener("click", () => {
+   		console.log(`child: ${event.currentTarget.nodeName}, ${event.target.nodeName}`)
+   	})
+
+   	parent.addEventListener("click", () => {
+   		console.log(`parent: ${event.currentTarget.nodeName}, ${event.target.nodeName}`)
+   	}
+
+   	grandParent.addEventListener("click", () => {
+   		if (event.target !== event.currentTarget) return;
+   		console.log(`grandParent: ${event.currentTarget.nodeName}, ${event.target.nodeName}`)
+   	})
+</script>
+```
+
+위와 같이 버블링 전파 효과를 그대로 두되,
+grandParent에서 이벤트 실제 발생 요소와 이벤트 핸들러를 가지고 있는 요소를 비교해 예외 처리를 하는 방식으로 해결이 가능합니다.

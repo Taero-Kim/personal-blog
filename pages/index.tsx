@@ -1,4 +1,4 @@
-import { Posts } from "@type/posts";
+import { Post, Posts } from "@type/posts";
 import type { GetStaticProps, NextPage } from "next";
 import { readdirSync, readFileSync } from "fs";
 import matter from "gray-matter";

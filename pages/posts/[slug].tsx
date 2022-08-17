@@ -10,7 +10,7 @@ import PostTopSection from "@components/post/PostTopSection";
 import PostBottomSection from "@components/post/PostBottomSection";
 import PostImage from "@components/mdx/PostImage";
 
-import { readdirSync } from "fs";
+import { readdirSync, readFileSync } from "fs";
 import matter from "gray-matter";
 import hljs from "highlight.js";
 import javascript from "highlight.js/lib/languages/javascript";
@@ -24,6 +24,8 @@ hljs.registerLanguage("javascript", javascript);
 const PostDetail: NextPage<PostDetailProps> = ({
   mdxContent,
   data,
+  prevPost,
+  nextPost,
 }: PostDetailProps) => {
   useEffect(() => {
     hljs.initHighlighting();
@@ -42,12 +44,12 @@ const PostDetail: NextPage<PostDetailProps> = ({
       </Head>
 
       <PostTopSection data={data} />
-      <div className="mx-auto mb-12 max-w-[1080px] px-4 md:px-0">
-        <div className="prose-headings:text-black30 \ prose max-w-none prose-p:text-black20 prose-code:text-blue-400 dark:prose-headings:text-darkText dark:prose-p:text-darkPText dark:prose-a:text-yellow-600 dark:prose-strong:text-pink-500 dark:prose-code:bg-transparent dark:prose-code:text-green-400 dark:prose-li:text-darkPText dark:prose-li:marker:text-white">
+      <div className="mx-auto mb-12 max-w-[1080px] px-4 md:px-2">
+        <div className="prose-headings:text-black30 prose max-w-none prose-p:text-black20 prose-code:text-blue-400 dark:prose-headings:text-darkText dark:prose-p:text-darkPText dark:prose-a:text-yellow-600 dark:prose-strong:text-pink-500 dark:prose-code:bg-transparent dark:prose-code:text-green-400 dark:prose-li:text-darkPText dark:prose-li:marker:text-white">
           <MDXRemote {...mdxContent} components={components} />
         </div>
       </div>
-      <PostBottomSection data={data} />
+      <PostBottomSection data={data} prevPost={prevPost} nextPost={nextPost} />
     </>
   );
 };
@@ -68,10 +70,38 @@ export const getStaticProps: GetStaticProps = async (context) => {
   const { data, content } = matter.read(`./posts/${context?.params?.slug}.mdx`);
   const mdxContent = await serialize(content);
 
+  const posts = readdirSync("./posts").map((fileName) => {
+    const file = fileName.replace(".mdx", "");
+    const info = readFileSync(`./posts/${fileName}`, "utf-8");
+
+    const { data } = matter(info);
+    return { ...data, fileName: file };
+  });
+
+  const filteredPosts: any = posts.sort(
+    (a: any, b: any) => new Date(b.date).valueOf() - new Date(a.date).valueOf()
+  );
+
+  const currentPostIndex = filteredPosts.findIndex(
+    (item: any) => item.fileName === context?.params?.slug
+  );
+
+  const prevPost = {
+    title: filteredPosts[currentPostIndex + 1]?.title || null,
+    route: filteredPosts[currentPostIndex + 1]?.fileName || null,
+  };
+
+  const nextPost = {
+    title: filteredPosts[currentPostIndex - 1]?.title || null,
+    route: filteredPosts[currentPostIndex - 1]?.fileName || null,
+  };
+
   return {
     props: {
       mdxContent,
       data,
+      prevPost,
+      nextPost,
     },
   };
 };

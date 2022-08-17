@@ -25,7 +25,14 @@ export interface PostTopSectionProps {
   data: Post;
 }
 
+export interface PrevOrNextPost {
+  title: string | null;
+  route: string | null;
+}
+
 export interface PostDetailProps {
   mdxContent: MDXRemoteSerializeResult<Record<string, unknown>>;
   data: Post;
+  prevPost: PrevOrNextPost;
+  nextPost: PrevOrNextPost;
 }
