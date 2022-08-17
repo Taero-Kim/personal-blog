@@ -5,7 +5,7 @@ const ChatIcon = () => {
     <a href="https://open.kakao.com/o/gzGH6Vve">
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        className="h-6 w-6 dark:stroke-white"
+        className="h-6 w-6 hover:fill-[#FF5100] hover:stroke-black20 dark:stroke-white"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"

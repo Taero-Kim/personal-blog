@@ -1,0 +1,155 @@
+---
+title: 자바스크립트 async/await
+date: 2021.11.05
+author: hulk
+slogan: 즐겁게 코딩하고 항상 성장하고 싶은 개발자입니다.
+tags: "#javascript #async #await #asynchronous"
+category: tech
+content: 이때 async와 await라는 특별한 문법을 사용하면 Promise를 조금 더 깔끔하게 사용할 수 있습니다. 마치 동기식으로 코드를 작성하는 것처럼 간편하게 코드를 작성할 수 있도록 도와줍니다.
+thumbnail: https://cdn.discordapp.com/attachments/1002228584401870871/1009383974793125898/async.png
+---
+
+## Why async / await ?
+
+지난 포스팅에서 Promise에 대해 살펴보았습니다. Promise는 Callback Hell을 깔끔하게 해결해 주는 고마운 녀석이었지만, 얘도 chaining을 계속하다 보면 코드가 조금 난잡해질 수 있다는 단점이 있습니다.
+
+이때 **async와 await**라는 특별한 문법을 사용하면 Promise를 조금 더 깔끔하게 사용할 수 있습니다.
+마치 동기식으로 코드를 작성하는 것처럼 간편하게 코드를 작성할 수 있도록 도와줍니다.
+
+**요약 : Promise를 깔끔하게 사용하게 해줍니다**
+
+## 되짚어보자. (비동기와 Promise)
+
+async와 await에 대해 알아보기 전에 비동기 처리의 필요성과 Promise의 간단한 사용법을 되짚어 보겠습니다.
+
+[코드 출처 : 드림코딩 유튜브](https://www.youtube.com/watch?v=aoQSOZfz3vQ&t=820s)
+
+```js
+function fetchUser() {
+  // 10초 정도 걸리는 서버에서 사용자 데이터를 받아오는 코드가 있다고 가정.
+  return "complete";
+}
+
+const user = fetchUser();
+console.log("user 데이터 가져오기 완료");
+console.log("Page UI 표시!");
+```
+
+javascirpt 엔진은 기본적으로 순서대로 위에서부터 아래로 한 줄씩 코드를 실행시킵니다. 이는 바로 **동기적인 처리**를 하고 있는 것이죠.
+위 코드에서 그 어떤 비동기 처리도 하지 않으면 10초가 지난 뒤에야 console에 "page UI 표시!"가 출력될 것입니다.
+즉 실제 어떤 서비스를 제공하는 웹페이지라고 치면, 데이터를 받아오는 10초 동안 사용자는 그 어떤 UI 요소도 렌더링 되지 않은 텅 빈 지루한 화면을 보고 있을 것입니다.
+이게 **비동기 처리의 필요성**이었습니다.
+
+```js
+function fetchUser() {
+  return new Promise((resolve, reject) => {
+    // 10초 정도 걸리는 서버에서 사용자 데이터를 받아오는 코드가 있다고 가정.
+    resolve("complete");
+  });
+}
+
+const user = fetchUser();
+user.then(console.log("user 데이터 가져오기 완료"));
+console.log("Page UI 표시");
+```
+
+우리는 이런 비동기 처리를 위해 지난번에 위와 같이 Promise api를 사용했었습니다.
+
+## async
+
+async는 위에서 말했던 대로 위와 같은 Promise를 조금 더 깔끔하게 쓸 수 있게 도와주는 syntactic sugar입니다. 사용법도 간단합니다.
+
+```js
+async function fetchUser() {
+  // 10초 정도 걸리는 서버에서 사용자 데이터를 받아오는 코드가 있다고 가정.
+  return "complete";
+}
+
+const user = fetchUser();
+user.then(console.log("user 데이터 가져오기 완료"));
+console.log("Page UI 표시");
+```
+
+위에서 봤던 예제와 동일한 코드입니다. 언뜻 봐도 Promise보다 훨씬 더 간결해진 걸 알 수 있습니다.
+이는 **function 앞에 async라는 키워드를 붙여주는 것**만으로도 가능합니다.
+저렇게 async를 붙여주면 해당 함수 코드 블록은 **Promise를 반환**합니다.
+
+## await 사용법
+
+**await**은 **async 키워드가 붙은 함수 내에서만 동작하는** 키워드입니다.
+(일반 함수에서 사용하게 되면 Syntax error가 발생합니다.)
+
+기본적으로 await을 만나면 **Promise가 처리(settled)될 때까지 함수 실행을 기다립니다.**
+Promise가 처리되면 그 결과와 함께 실행이 재개됩니다. 처리되는 동안에는 비동기적으로 엔진이 다른 일을 할 수 있게 만들어주죠.
+
+```js
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function test() {
+  await delay(3000);
+  console.log("완료");
+}
+
+test();
+```
+
+위 코드를 살펴보겠습니다.
+단지 delay라는 Promise 앞에 await를 붙여주는 것만으로도 3초를 기다렸다가 완료라는 문자열을 콘솔에 출력하는 Promise가 만들어졌습니다.
+Promise에서 then의 역할을 대신한다고 생각하면 편합니다.
+
+아래는 Promise의 then을 사용한 코드입니다.
+
+```js
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function test() {
+  return delay(3000).then(console.log("완료"));
+}
+
+test();
+```
+
+사실 코드가 짧아서 잘 느껴지지 않을 수도 있지만 await가 조금 더 직관적인 느낌이고,
+긴 코드를 짠다고 가정했을 때 Promise를 사용한다면 코드가 꽤나 복잡해질 것입니다.
+
+## 에러 처리
+
+**Promise에서는 .catch를 체이닝**하는 것으로 에러를 잡을 수 있었습니다.
+**async await에서는** javascript가 제공하는 **try..catch**문을 사용할 수 있습니다.
+
+```js
+try {
+  // 코드...
+} catch (err) {
+  // 에러 핸들링
+}
+```
+
+try..catch는 다음과 같이 동작합니다.
+
+1. 먼저, try 안의 코드가 실행되고,
+2. 에러가 없다면 try 블록 안의 마지막 줄까지 실행되고 catch 블록은 건너 뜁니다.
+3. 에러가 있다면 try 안 코드의 실행이 중단되고 catch(err) 블록으로 넘어갑니다. 변수 err에는 어떤 에러인지에 대한 설명이 담긴 객체가 포함됩니다.
+
+따라서 이 형태에 맞게 try 코드를 감싸고, 나머지 에러를 적절하게 핸들링하면 됩니다.
+
+```js
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function test() {
+  try {
+    await delay(3000);
+    console.log("완료");
+  } catch (err) {
+    console.log(err);
+  }
+}
+
+test();
+```

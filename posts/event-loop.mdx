@@ -1,0 +1,247 @@
+---
+title: 자바스크립트 이벤트 루프
+date: 2021.11.02
+author: hulk
+slogan: 즐겁게 코딩하고 항상 성장하고 싶은 개발자입니다.
+tags: "#javascript #event-loop #asynchronous"
+category: tech
+content: 자바스크립트의 비동기적(asynchronous) 처리에는 대표적으로 callback 함수, promise, async가 있습니다. 이 각각의 문법 자체도 중요하겠지만 그것보다도 왜 이런것들을 사용해야하는지? 에 대한 배경이 중요하다는 걸 느꼈습니다. 그 배경에는 바로 오늘 정리해볼 Event Loop가 있습니다.
+thumbnail: https://cdn.discordapp.com/attachments/1002228584401870871/1009115266350850118/event-loop.png
+---
+
+## 프롤로그
+
+자바스크립트의 비동기적(asynchronous) 처리에는 대표적으로 `callback 함수`, `promise`, `async`가 있습니다.
+이 각각의 문법 자체도 중요하겠지만 그것보다도 **왜 이런 것들을 사용해야 하는지?** 에 대한 배경이 중요하다는 걸 느꼈습니다.
+
+그 배경에는 바로 오늘 정리해 볼 **Event Loop**가 있습니다.
+이것은 **javascript 엔진의 동작 방식** 을 이해하는 데에도 도움이 되기 때문에 매우 중요하다고 생각합니다.
+
+## JS Engine
+
+우선 javascript 엔진에 대한 이해가 필요합니다.
+**javascript 엔진**은 쉽게는 사람이 이해하는 언어(**javascript 코드**)로 작성된 것을
+컴퓨터가 이해할 수 있는 언어로 변환해 주는 프로그램입니다.
+종류가 다양한데 자주 사용하는 **chrome 브라우저**와 **node.js**에서는 구글이 개발한 **V8**이라는 엔진을 사용합니다.
+
+<PostImage
+  src="https://images.velog.io/images/taero30/post/e6ea2973-79f7-4ff3-a4fe-29b1a857b9d0/%E1%84%89%E1%85%B3%E1%84%8F%E1%85%B3%E1%84%85%E1%85%B5%E1%86%AB%E1%84%89%E1%85%A3%E1%86%BA%202021-11-02%20%E1%84%8B%E1%85%A9%E1%84%92%E1%85%AE%207.35.26.png"
+  width={300}
+  caption="V8 엔진"
+/>
+
+이 엔진은 그림에서와같이 크게 두 부분으로 구성됩니다. 바로 **Memory Heap**과, **Call
+stack**.
+
+- **Memory Heap** : 변수와 함수 등의 메모리 할당이 이루어지는 곳입니다.
+- **Call Stack** : 코드가 실행되면서 스택 프레임이 쌓이는 곳입니다.
+  (코드의 실행 순서대로 저 Call Stack이라는 영역에 밑에서부터 순서대로 쌓입니다.)
+
+이 중, **Call stack**을 조금 더 자세히 보겠습니다.
+
+## Call stack과 함수 실행 순서
+
+위에서 언급했듯 Call stack은 함수 실행 순서대로 아래에서부터 쌓이고, 실행될 때는 위에서부터 순서대로 실행됩니다.
+
+```javascript
+function first() {
+  second();
+  console.log("첫 번째");
+}
+
+function second() {
+  third();
+  console.log("두 번째");
+}
+
+function third() {
+  console.log("세 번째");
+}
+
+first();
+third();
+```
+
+위 코드의 실행 순서를 그림으로 간단하게 표현하면 아래와 같습니다.
+
+<PostImage
+  src="https://images.velog.io/images/taero30/post/6dd23337-b638-4834-ad71-fd8d923e3c3e/%E1%84%89%E1%85%B3%E1%84%8F%E1%85%B3%E1%84%85%E1%85%B5%E1%86%AB%E1%84%89%E1%85%A3%E1%86%BA%202021-11-02%20%E1%84%8B%E1%85%A9%E1%84%92%E1%85%AE%209.15.36.png"
+  width={300}
+  caption="call stack"
+/>
+
+<div className="text-center text-sm text-gray-200">
+  [call stack 코드 및 사진
+  출처](https://www.zerocho.com/category/JavaScript/post/597f34bbb428530018e8e6e2)
+</div>
+
+이렇게 함수가 **위에서부터 실행이 되면 stack에서 하나씩 지워집니다.**
+참고로 stack의 맨 아래에 있는 main()은 전역 컨텍스트입니다.
+(일단은 브라우저에서 스크립트를 로딩해서 실행하는 순간 자동으로 생기는 것이라는 정도만 이해하고 넘어갑시다.)
+
+javascript 엔진은 이 call stack을 사용해서 코드를 처리합니다.
+위 그림처럼 이 **call stack**은 **한 번에 하나씩 추가되고 사라집니다.**
+간단하게 말해서, 한 번에 하나의 작업밖에 못한다는 것입니다.
+흔히들 **javascript**는 **싱글 스레드(single thread)** 라는 얘기를 많이 하는데,
+이 의미는 **call stack이 하나**라는 것입니다.
+
+## 동기? 비동기?
+
+- **동기 (synchronous)** : 동기는 말 그대로 동시에 발생한다는 뜻입니다. 요청을 하면 시간이 얼마 걸리던지 요청한 자리에서 결과가 주어져야 합니다. 다르게 말해서, 한 작업이 끝날때 까진 다른 작업을 할 수 없다는 뜻이죠.
+  이를 **blocking**이라 합니다.
+
+- **비동기 (asynchronous)** : 반면에 비동기는 동시에 일어나지 않는다는 뜻입니다. 요청한 그 자리에서 결과가 주어지지 않는다는 것입니다.
+
+이를 그림으로 보면 훨씬 직관적으로 이해가 갑니다.
+
+<PostImage
+  src="https://images.velog.io/images/taero30/post/c3c0842b-7b44-4c21-a273-bbf815dd1984/%E1%84%89%E1%85%B3%E1%84%8F%E1%85%B3%E1%84%85%E1%85%B5%E1%86%AB%E1%84%89%E1%85%A3%E1%86%BA%202021-11-02%20%E1%84%8B%E1%85%A9%E1%84%92%E1%85%AE%209.35.58.png"
+  width={600}
+  caption="synchronous & asynchronous"
+/>
+
+**javascript 엔진은 기본적으로** 위에서 본 stack의 특징 때문에, 또 stack이 하나라는 점에서
+**동기적(synchronous)** 으로 작동합니다. (한 번에 하나의 작업만 순서대로 하기 때문이죠.)
+
+**그런데 사실 javascript 엔진도 비동기적(asynchronous)인 처리를 할 수 있습니다.**
+이는 지금부터 살펴볼 **이벤트 루프(Event-loop)** 와 관련이 있습니다.
+
+## 근데 왜 비동기?
+
+비동기 처리를 할 수 있다는 건 알겠는데, 왜 굳이 비동기가 필요할까요?<br />
+우리가 자주 쓰는 chrome 브라우저를 상상해 봅시다. 유튜브 사이트에 들어가서 영상을 하나 보려고 클릭했습니다.
+이때, **javascript 엔진이 동기적으로 작동한다면 어떨까요?**
+동영상이 완전히 다 로드될 때까지 화면에는 검은색 플레이어 화면만 놓여있고,
+나머지는 흰 공백으로 아무것도 렌더링 되지 않을 것입니다.
+따라서 브라우저에서 비동기적인 처리는 필수라고 볼 수 있습니다.
+비동기적인 처리 때문에 우리는 유튜브에서 영상이 다 로드되지 않아도 렌더링 된 나머지 화면을 볼 수 있는 것이죠.
+
+## 이벤트루프
+
+위에서 봤던 javascript 엔진 그림에 몇 가지 요소가 추가된 그림을 살펴보겠습니다.
+![](https://images.velog.io/images/taero30/post/96bb0fad-c5fc-4820-9586-6ea080979bc7/%E1%84%89%E1%85%B3%E1%84%8F%E1%85%B3%E1%84%85%E1%85%B5%E1%86%AB%E1%84%89%E1%85%A3%E1%86%BA%202021-11-02%20%E1%84%8B%E1%85%A9%E1%84%92%E1%85%AE%209.53.10.png)
+
+기존 그림에서 오른쪽에 Web APIs와 Callback Queue 그리고 Event Loop라는 것들이 추가됐습니다.
+
+우선 확실히 해야 할 것은 **이 3가지는 javascript 엔진이 제공하는 것이 아니라는 점**이다.
+이는 브라우저에서 제공하는 것입니다.
+
+## Web Apis
+
+- **브라우저에서 제공** 하는 API는 DOM, Ajax, setTimeout 등 아주 다양한 종류가 있습니다.
+- 바로 이 지점에서 비동기성이 확보됩니다!(이게 무슨 말인지는 아래 이벤트 루프의 동작에서 자세히 보겠습니다.)
+
+```js
+function hello() {
+  console.log("안녕 나는 Taeroring");
+}
+
+setTimeout(hello, 5000);
+// 5초 뒤 함수 hello 실행.
+```
+
+- `setTimeout()` : 위 예제처럼 첫 번째 인자로 함수를, 두 번째 인자로 시간(밀리세컨드)를 전달하면 설정한 시간이 지난 뒤 전달받은 함수를 실행시키는 브라우저 API입니다.
+
+### 이벤트 루프 동작 원리(사진)
+
+그럼 과연 Call stack이며, Web APIs며, Callback Queue, Event-Loop는 어떻게 동작한다는 것일까요?
+지금부터 예제 코드를 그림으로 살펴볼 예정입니다.
+
+<div className="text-center text-sm text-gray-200">
+  <a href="https://engineering.huiseoul.com/%EC%9E%90%EB%B0%94%EC%8A%A4%ED%81%AC%EB%A6%BD%ED%8A%B8%EB%8A%94-%EC%96%B4%EB%96%BB%EA%B2%8C-%EC%9E%91%EB%8F%99%ED%95%98%EB%8A%94%EA%B0%80-%EC%9D%B4%EB%B2%A4%ED%8A%B8-%EB%A3%A8%ED%94%84%EC%99%80-%EB%B9%84%EB%8F%99%EA%B8%B0-%ED%94%84%EB%A1%9C%EA%B7%B8%EB%9E%98%EB%B0%8D%EC%9D%98-%EB%B6%80%EC%83%81-async-await%EC%9D%84-%EC%9D%B4%EC%9A%A9%ED%95%9C-%EC%BD%94%EB%94%A9-%ED%8C%81-%EB%8B%A4%EC%84%AF-%EA%B0%80%EC%A7%80-df65ffb4e7e">
+    이벤트 루프 예제 코드 및 사진 출처
+  </a>
+</div>
+
+```js
+console.log("Hi");
+setTimeout(function cb1() {
+  console.log("cb1");
+}, 5000);
+console.log("Bye");
+```
+
+1. 실행하기 전 초기 상태입니다. 모든 영역이 비어있죠.
+   ![](https://images.velog.io/images/taero30/post/52dafe0a-aaa2-4c28-a214-c0fe68a8a480/%E1%84%89%E1%85%B3%E1%84%8F%E1%85%B3%E1%84%85%E1%85%B5%E1%86%AB%E1%84%89%E1%85%A3%E1%86%BA%202021-11-02%20%E1%84%8B%E1%85%A9%E1%84%92%E1%85%AE%2010.15.34.png)
+
+2. javascript가 먼저 읽는 위에서부터 실행, 즉 `console.log("hi")`가 Call stack에 추가됩니다.
+   ![](https://images.velog.io/images/taero30/post/e9c94816-f087-42dd-9bf3-a7cb64da6ba2/%E1%84%89%E1%85%B3%E1%84%8F%E1%85%B3%E1%84%85%E1%85%B5%E1%86%AB%E1%84%89%E1%85%A3%E1%86%BA%202021-11-02%20%E1%84%8B%E1%85%A9%E1%84%92%E1%85%AE%2010.17.19.png)
+
+3. `console.log("hi")`가 실행됩니다.
+   ![](https://images.velog.io/images/taero30/post/b15c74ed-8ff0-4ccd-83bc-4e4d6b234f6e/%E1%84%89%E1%85%B3%E1%84%8F%E1%85%B3%E1%84%85%E1%85%B5%E1%86%AB%E1%84%89%E1%85%A3%E1%86%BA%202021-11-02%20%E1%84%8B%E1%85%A9%E1%84%92%E1%85%AE%2010.18.43.png)
+
+4. 실행이 됐으니 Call Stack에서 사라집니다.
+   ![](https://images.velog.io/images/taero30/post/1a6091fe-7e60-481e-9e72-f3ddf914cc7d/%E1%84%89%E1%85%B3%E1%84%8F%E1%85%B3%E1%84%85%E1%85%B5%E1%86%AB%E1%84%89%E1%85%A3%E1%86%BA%202021-11-02%20%E1%84%8B%E1%85%A9%E1%84%92%E1%85%AE%2010.19.29.png)
+
+5. `setTimeout( function cb1() {...} )`이 Call Stack에 추가됩니다.
+   ![](https://images.velog.io/images/taero30/post/f5cec20b-e48a-47bd-8c7b-85aec13f26ee/%E1%84%89%E1%85%B3%E1%84%8F%E1%85%B3%E1%84%85%E1%85%B5%E1%86%AB%E1%84%89%E1%85%A3%E1%86%BA%202021-11-02%20%E1%84%8B%E1%85%A9%E1%84%92%E1%85%AE%2010.21.12.png)
+
+6. `setTimeout( function cb1() {...} )` 이 실행됩니다! 동시에 setTimeout()은 Web API를 호출합니다! 그리고 저 Web APIs 영역에는 timer가 생성됩니다. (째깍째깍)
+   ![](https://images.velog.io/images/taero30/post/8cb17615-5230-406a-9fe2-8d92f65ee083/%E1%84%89%E1%85%B3%E1%84%8F%E1%85%B3%E1%84%85%E1%85%B5%E1%86%AB%E1%84%89%E1%85%A3%E1%86%BA%202021-11-02%20%E1%84%8B%E1%85%A9%E1%84%92%E1%85%AE%2010.25.39.png)
+
+7. `setTimeout( function cb1() {...} )` 이 Web API를 호출하면 실행이 된 것입니다. 그렇기 때문에 Call Stack에서 사라집니다.
+   ![](https://images.velog.io/images/taero30/post/9786072b-9183-4bc8-9c7a-22957949208c/%E1%84%89%E1%85%B3%E1%84%8F%E1%85%B3%E1%84%85%E1%85%B5%E1%86%AB%E1%84%89%E1%85%A3%E1%86%BA%202021-11-02%20%E1%84%8B%E1%85%A9%E1%84%92%E1%85%AE%2010.27.00.png)
+
+8. 그 다음 줄인 `console.log('Bye')`가 Call Stack에 추가됩니다.
+   ![](https://images.velog.io/images/taero30/post/1fecf243-9e06-4422-8b2c-5ab9815483b7/%E1%84%89%E1%85%B3%E1%84%8F%E1%85%B3%E1%84%85%E1%85%B5%E1%86%AB%E1%84%89%E1%85%A3%E1%86%BA%202021-11-02%20%E1%84%8B%E1%85%A9%E1%84%92%E1%85%AE%2010.28.10.png)
+
+9. `console.log('Bye')`가 실행됩니다.
+   ![](https://images.velog.io/images/taero30/post/5dbbd6df-e4e5-4eba-9f7f-60c530937ca3/%E1%84%89%E1%85%B3%E1%84%8F%E1%85%B3%E1%84%85%E1%85%B5%E1%86%AB%E1%84%89%E1%85%A3%E1%86%BA%202021-11-02%20%E1%84%8B%E1%85%A9%E1%84%92%E1%85%AE%2010.28.59.png)
+
+10. `console.log('Bye')`가 실행됐으므로 Call Stack에서 제거됩니다.
+    ![](https://images.velog.io/images/taero30/post/167cd783-2a6f-43b4-bfff-3189d61da10f/%E1%84%89%E1%85%B3%E1%84%8F%E1%85%B3%E1%84%85%E1%85%B5%E1%86%AB%E1%84%89%E1%85%A3%E1%86%BA%202021-11-02%20%E1%84%8B%E1%85%A9%E1%84%92%E1%85%AE%2010.30.00.png)
+
+11. 5000ms -> 5초가 지난 뒤 Web APIs에 있는 timer가 끝나면 안에 실행되기로 약속되었던
+    콜백 함수(cb1)을 Callback Queue에 밀어 넣습니다.
+    ![](https://images.velog.io/images/taero30/post/fa8835cb-01ac-4278-975e-83378abbc5cc/%E1%84%89%E1%85%B3%E1%84%8F%E1%85%B3%E1%84%85%E1%85%B5%E1%86%AB%E1%84%89%E1%85%A3%E1%86%BA%202021-11-02%20%E1%84%8B%E1%85%A9%E1%84%92%E1%85%AE%2010.32.30.png)
+
+12. 이벤트 루프는 콜백 함수 cb1을 Callback Queue에서 Call Stack으로 밀어 넣습니다.
+    (단, **Call Stack이 완전히 비어있을 때만** 밀어 넣습니다.)
+    ![](https://images.velog.io/images/taero30/post/f63b2619-761c-4144-903b-60af29c59dee/%E1%84%89%E1%85%B3%E1%84%8F%E1%85%B3%E1%84%85%E1%85%B5%E1%86%AB%E1%84%89%E1%85%A3%E1%86%BA%202021-11-02%20%E1%84%8B%E1%85%A9%E1%84%92%E1%85%AE%2010.37.23.png)
+
+13. 콜백 함수 cb1이 실행되고 그 함수 스코프 안에 있는 `console.log('cb1')`을 Call Stack에 추가합니다.
+    ![](https://images.velog.io/images/taero30/post/22226738-9393-4328-bd31-c45b2dac5931/%E1%84%89%E1%85%B3%E1%84%8F%E1%85%B3%E1%84%85%E1%85%B5%E1%86%AB%E1%84%89%E1%85%A3%E1%86%BA%202021-11-02%20%E1%84%8B%E1%85%A9%E1%84%92%E1%85%AE%2010.39.43.png)
+
+14. `console.log('cb1')`이 실행됩니다.
+    ![](https://images.velog.io/images/taero30/post/e032aab3-2d2f-4e6a-b0da-7d6243a980df/%E1%84%89%E1%85%B3%E1%84%8F%E1%85%B3%E1%84%85%E1%85%B5%E1%86%AB%E1%84%89%E1%85%A3%E1%86%BA%202021-11-02%20%E1%84%8B%E1%85%A9%E1%84%92%E1%85%AE%2010.40.37.png)
+
+15. `console.log('cb1')`가 Call Stack에서 제거됩니다.
+    ![](https://images.velog.io/images/taero30/post/c6c05a2d-de70-4293-9b40-1992a7ebd7c9/%E1%84%89%E1%85%B3%E1%84%8F%E1%85%B3%E1%84%85%E1%85%B5%E1%86%AB%E1%84%89%E1%85%A3%E1%86%BA%202021-11-02%20%E1%84%8B%E1%85%A9%E1%84%92%E1%85%AE%2010.40.49.png)
+
+16. 마지막으로 콜백 함수 cb1의 실행이 완료되었으므로 cb1 또한 Call Stack에서 제거됩니다.
+    ![](https://images.velog.io/images/taero30/post/52bd6351-441e-49a5-b69a-9ad6d12e7544/%E1%84%89%E1%85%B3%E1%84%8F%E1%85%B3%E1%84%85%E1%85%B5%E1%86%AB%E1%84%89%E1%85%A3%E1%86%BA%202021-11-02%20%E1%84%8B%E1%85%A9%E1%84%92%E1%85%AE%2010.41.43.png)
+
+```js
+console.log("Hi");
+setTimeout(function cb1() {
+  console.log("cb1");
+}, 5000);
+console.log("Bye");
+```
+
+지금까지 우리가 봤던 예제 코드입니다.
+원래 javascript 엔진의 특성상
+
+1. 콘솔에 Hi 출력
+2. 5초(5000ms) 대기
+3. 콘솔에 cb1 출력
+4. 콘솔에 Bye 출력
+
+이런 동기적(synchronous)인 흐름으로 가야 할 것만 같은데,
+위에서부터 쭉 본 그림처럼 Web API때문에 5000ms를 기다리며 blocking 되지 않고
+비동기적(asynchronous)으로 처리할 수 있게 된 것입니다.
+
+이는 브라우저라는 특수성 때문에 가능한 것입니다.
+
+## 그림에서의 Event-loop
+
+하나만 마지막으로 짚고 넘어가겠습니다.
+위 그림에 있는 Event-loop는 잠깐 과정 설명에서 언급했는데 역할은 단순합니다.
+**항상 Call Stack과 Callback Queue를 감시하는 것이다.**
+감시하다가 **Call Stack이 비었다면** 그때 **Callback Queue에서 대기하고 있던 이벤트**를
+**Call Stack에 밀어 넣어서** 실행시키게 하는 역할을 합니다!
+
+## 마무리하며
+
+오늘 포스팅한 이벤트 루프(Event-loop) 동작은 javascript에서 굉장히 중요합니다.
+또한 Callback, Promise, async를 이해하는 데에도 도움이 많이 될 것입니다.

@@ -1,0 +1,205 @@
+---
+title: 자바스크립트 promise
+date: 2021.11.04
+author: hulk
+slogan: 즐겁게 코딩하고 항상 성장하고 싶은 개발자입니다.
+tags: "#javascript #promise #asynchronous"
+category: tech
+content: Promise는 특정 기능을 수행시켰을 때, '이게 성공하면 이렇게 해줘' '이게 실패하면 이렇게 해줘' 등의 기능을 심어놓을 수 있는 성공 실패 처리(판독)기라고 생각하면 이해하기 쉽습니다. 아직은 직관적인 이해가 힘들 것 같습니다. 자세히 보기 전에, Promise는 그저 Callback을 조금 더 세련되게 표현할 수 있는 코드 디자인 패턴 중 하나라고 생각하고 차근차근 접근해 보면 좋을 것 같습니다. 프라미스. Promise
+thumbnail: https://cdn.discordapp.com/attachments/1002228584401870871/1009383975426474076/promise.png
+---
+
+**Callback**이라는 강력한 수단을 통해 비동기적인 함수의 순서를 제어할 수 있었습니다.
+하지만 **Callback hell**이라는 치명적인 단점이 발생하기도 했습니다.
+
+이를 위해 고안된 것이 바로 **Promise**입니다.
+
+## Promise
+
+- javascript 안에 내장되어 있는 Class입니다.
+- Callback 대신에 비동기적인 함수 제어를 위해 유용하게 쓰입니다.
+- 특정 기능을 수행시켰을 때, '이게 성공하면 이렇게 해줘' '이게 실패하면 이렇게 해줘' 등의 기능을 심어놓을 수 있는 **성공 실패 처리(판독)기**라고 생각하면 이해하기 쉽습니다.
+- 아직은 직관적인 이해가 힘들 것 같습니다. 자세히 보기 전에, Promise는 그저 Callback을 조금 더 세련되게 표현할 수 있는 코드 디자인 패턴 중 하나라고 생각하고 차근차근 접근해 보면 좋을 것 같습니다.
+
+## Promise 객체 생성
+
+Class이기 때문에 `new`라는 키워드를 통해 객체 인스턴스를 생성할 수 있습니다.
+기본 생김새는 다음과 같습니다.
+
+```js
+const promise = new Promise((resolve, reject) => {
+  // executor 함수 본문
+});
+```
+
+Promise 생성자에는 **excecutor(실행자)**라는 콜백 함수를 전달해 줘야 합니다.
+이는 `new Promise` 가 만들어질 때에 자동으로 실행됩니다.
+executor 함수에는 resolve와 reject라는 인자가 담겨있는데, 이는 javascript에서 자체 제공하는 콜백 함수입니다. 이 둘은 성공과 실패를 판독하는 역할을 합니다.
+
+- **resolve** : 기능을 정상적으로 수행해서 마지막에 그 결과를 나타내는 value와 호출됨
+  (성공 판독)
+- **reject** : 기능을 수행하다가 문제가 생기면 에러 객체를 나타내는 error와 호출됨
+  (실패 판독)
+
+요약하자면, `new Promise`로 선언하면 인자를 하나 받는데 그 인자는 함수입니다.
+그 함수는 executor라고 부르고 이는 Promise가 생성되면 자동으로 실행되죠.
+우리는 executor 내에 우리가 원하는 기능을 코드로 작성해놓을 것입니다.
+그러면 그 코드의 처리의 성공, 실패 여부에 따라 각각 resolve, reject를 호출합니다.
+
+## Promise의 3가지 상태
+
+Promise는 **3가지 state(상태)** 를 가집니다.
+![](https://images.velog.io/images/taero30/post/192be768-4bcb-4915-b741-ab9258094800/%E1%84%89%E1%85%B3%E1%84%8F%E1%85%B3%E1%84%85%E1%85%B5%E1%86%AB%E1%84%89%E1%85%A3%E1%86%BA%202021-11-09%20%E1%84%8B%E1%85%A9%E1%84%8C%E1%85%A5%E1%86%AB%202.50.29.png)
+
+- **pending** : 단어 뜻 그대로 보류 중(처리 중)이라는 상태입니다.(초기 default 상태)
+- **fulfilled** : resolve, 즉 Promise가 성공 판독 시 fullfilled(충족함)이라는 상태로 변경됩니다.
+- **rejected** : reject, 즉 Promise가 실패 판독 시 rejected(거부함)이라는 상태로 변경됩니다.
+
++) fullfilled 혹은 rejected 상태의 Promise를 묶어서 **settled(처리된)** Promise라고 부르기도 합니다.
+
+당연한 얘기겠지만, 이 Promise는 pending의 상태로 시작하지만, 결국은 executor 함수 내에서 resolve(성공) 혹은 reject(실패) 둘 중 하나를 호출해서 상태를 변경해야 합니다.
+다만, resolve(성공) 혹은 reject(실패) 처리돼서 변경된 상태는 더 이상 변하지 않습니다.
+
+## then, catch, finally
+
+그럼 Promise 객체가 대충 성공, 실패를 판독한다는 건 알겠는데 이걸 어떻게 콜백처럼 활용할까요?<br /> 지금부터 볼 3가지의 대표적인 Promise.prototype.method를 사용함으로써 가능해집니다.
+위에서 생성한 Promise 객체가 Producer(생산자)의 측면이었다면, 이 메서드들은 그 생산자가 만들어놓은 Promise를 활용하는 Consumer(소비자)의 측면이라고 생각하면 됩니다.
+
+### then
+
+- Promise 가 정상적으로 처리되어 resolve를 호출하면, resolve에서 전달된 결과를 받아서 다음 원하는 기능(함수)을 실행시키는 메서드입니다.
+
+사용방법은 아래와 같이 단순히 만들어진 Promise뒤에 붙여서 그 뒤에 원하는 기능(함수) 등을 추가하면 됩니다.
+
+```js
+const promise = new Promise((resolve, reject) => {
+  // ...something to do
+  if (성공) resolve(value);
+  else reject(new Error());
+});
+
+promsie.then((value) => {
+  consolel.log(value);
+});
+```
+
+Promise executor의 resolve에서 값을 위와 같이 원하는 값을 전달할 수 있고,
+then은 그 값을 그대로 전달받아서 새로운 함수를 작성할 수 있습니다.
+다만, 꼭 resolve 혹은 reject에 값을 전달해야 하는 것은 아닙니다.
+
+### Catch
+
+- Promise 가 실패하여 reject를 호출하면, reject 전달된 에러를 받아서 에러를 처리할 기능(함수)을 실행시키는 메서드입니다.
+
+then과 사용하는 법은 같습니다.
+
+```js
+const promise = new Promise((resolve, reject) => {
+  // ...something to do
+  if (성공) resolve(value);
+  else reject(new Error("error"));
+});
+
+promsie
+  .then((value) => {
+    consolel.log(value);
+  })
+  .catch((err) => {
+    console.log(err);
+  });
+```
+
+여기서, 우리가 만들어놓은 promise 객체 바로 뒤에 catch를 쓰는 것이 아니라 저렇게 then 뒤에다가 붙이는 것이 이해가 안 갈 수도 있습니다.
+이는 Promise의 메서드들(then, catch, finally)은 Promise를 리턴하기 때문에 저런 식으로 계속 이어붙일 수 있는 것입니다.(체이닝이 가능합니다)
+
+then은 분명 Promise를 리턴하여 체이닝이 가능하다고 했는데, 아래와 같이 첫 번째 then의 콜백에서 value2라는 promise가 아닌 값을 리턴하면 어떻게 될까요?
+
+```js
+const promise = new Promise((resolve, reject) => {
+  // ...something to do
+  if (성공) resolve(value);
+  else reject(new Error("error"));
+});
+
+promsie
+  .then((value) => {
+    consolel.log(value);
+    return value2;
+  })
+  .then((value2) => {
+    console.log(value2);
+  });
+```
+
+이 경우에는 자동으로 promise가 fullfilled 된 것으로 간주하고, 그다음 then에 리턴한 값을 인자로 전달시켜줍니다.
+
+### finally
+
+- Promise의 성공(resolve), 실패(reject) 결과와 상관없이 무조건 마지막에 호출되는 메서드입니다.
+- 사용법은 then, catch와 동일합니다.
+
+```js
+const promise = new Promise((resolve, reject) => {
+  // ...something to do
+  if (성공) resolve(value);
+  else reject(new Error("error"));
+});
+
+promsie
+  .then((value) => {
+    consolel.log(value);
+  })
+  .catch((err) => {
+    console.log(err);
+  })
+  .finally(() => {
+    console.log("finally");
+  });
+```
+
+### Promise.all
+
+마지막으로 Promise에서 유용하게 쓰이는 메서드 하나만 살펴보겠습니다.
+
+- Promise가 담겨있는 Array와 같이 순회 가능한(iterable) 것을 인자로 받고, 그 전달받은 모든 Promise들을 병렬로 처리하여 그 결과를 resolve 하는 새로운 Promise를 반환합니다.
+
+설명이 어려운데 예시를 보면 생각보다 간단하다.
+여러 개의 Promise가 있다고 가정해 보겠습니다. 그리고 처리시간도 제각각 다릅니다.
+
+```js
+const promise1 = new Promise((resolve, reject) => {
+  setTimeout(() => resolve("Hi"), 3000);
+});
+const promise2 = new Promise((resolve, reject) => {
+  setTimeout(() => resolve("Hello"), 1000);
+});
+const promise3 = new Promise((resolve, reject) => {
+  setTimeout(() => resolve("안녕"), 2000);
+});
+```
+
+이렇게 각각 다른 3개의 Promise가 모두 resolve된 후에 어떤 기능을 실행시키려고 한다고 가정했을 때, 이것을 일일이 체이닝하여 이어붙여 쓰는 것은 비효율적일 것입니다.
+이럴 때, Promise.all을 쓸 수 있습니다.
+
+```js
+const promise1 = new Promise((resolve, reject) => {
+  setTimeout(() => resolve("Hi"), 3000);
+});
+const promise2 = new Promise((resolve, reject) => {
+  setTimeout(() => resolve("Hello"), 1000);
+});
+const promise3 = new Promise((resolve, reject) => {
+  setTimeout(() => resolve("안녕"), 2000);
+});
+
+Promise.all([promise1, promise2, promise3]).then((value) => console.log(value));
+
+// 3초 뒤 출력 :  ['Hi', 'Hello', '안녕']
+```
+
+위와 같이 3가지의 Promise를 담은 배열을 Promise.all의 인자로 주면 그것은 Promise를 리턴하고, 각각의 Promise의 resolve 값이 담긴 배열을 리턴합니다.
+다만, 그 배열에 담겨있는 Promise들 중 하나라도 reject 된다면 Promise.all이 리턴하는 Promise는 에러와 함께 바로 거부됩니다.
+
+## 마무리
+
+Promise의 개념이 조금 어려울 수 있겠지만, Callback을 보완하기 위한 코딩 디자인 패턴이라고 생각하고 접근하면 좋을 것 같습니다.

@@ -43,7 +43,7 @@ const PostDetail: NextPage<PostDetailProps> = ({
 
       <PostTopSection data={data} />
       <div className="mx-auto mb-12 max-w-[1080px] px-4 md:px-0">
-        <div className="prose-headings:text-black30 prose max-w-none prose-p:text-black20 dark:prose-headings:text-darkText dark:prose-p:text-darkPText dark:prose-a:text-yellow-600 dark:prose-strong:text-pink-500  dark:prose-code:text-green-400 dark:prose-li:text-darkPText dark:prose-li:marker:text-white">
+        <div className="prose-headings:text-black30 \ prose max-w-none prose-p:text-black20 prose-code:text-blue-400 dark:prose-headings:text-darkText dark:prose-p:text-darkPText dark:prose-a:text-yellow-600 dark:prose-strong:text-pink-500 dark:prose-code:bg-transparent dark:prose-code:text-green-400 dark:prose-li:text-darkPText dark:prose-li:marker:text-white">
           <MDXRemote {...mdxContent} components={components} />
         </div>
       </div>
