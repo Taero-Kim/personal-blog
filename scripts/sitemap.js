@@ -1,4 +1,5 @@
-import { readdirSync, writeFileSync } from "fs";
+// import { readdirSync, writeFileSync } from "fs";
+const fs = require("fs");
 
 const BASE_URL = "https://www.taero.blog";
 
@@ -19,7 +20,7 @@ const BASE_URL = "https://www.taero.blog";
       </urlset>`;
   };
 
-  const dynamicPages = readdirSync("../posts").map((fileName) => {
+  const dynamicPages = fs.readdirSync("./posts").map((fileName) => {
     const file = fileName.replace(".mdx", "");
 
     return { location: `/posts/${file}`, lastMod: new Date().toISOString() };
@@ -37,5 +38,5 @@ const BASE_URL = "https://www.taero.blog";
     ...dynamicPages,
   ];
 
-  writeFileSync("../public/sitemap.xml", generateSitemap(allPages), "utf8");
+  fs.writeFileSync("./public/sitemap.xml", generateSitemap(allPages), "utf8");
 })();
