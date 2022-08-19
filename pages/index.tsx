@@ -1,4 +1,4 @@
-import { Post, Posts } from "@type/posts";
+import { Posts } from "@type/posts";
 import type { GetStaticProps, NextPage } from "next";
 import { readdirSync, readFileSync } from "fs";
 import matter from "gray-matter";
@@ -8,11 +8,27 @@ import SearchBar from "@components/common/SearchBar";
 import Loading from "@components/common/Loading";
 import NoContents from "@components/common/NoContents";
 import Head from "next/head";
+import useInterval from "hooks/useInterval";
 
 const Home: NextPage<Posts> = ({ posts }: Posts) => {
   const [filteredPost, setFilteredPost] = useState(posts);
   const [keyword, setKeyword] = useState("");
   const [searching, setSearching] = useState(false);
+
+  useInterval(
+    () => {
+      console.log("searching");
+      const filter = posts.filter(
+        (post) =>
+          post.title.toLowerCase().includes(keyword.toLowerCase()) ||
+          post.tags.toLowerCase().includes(keyword.toLowerCase()) ||
+          post.content.toLocaleLowerCase().includes(keyword)
+      );
+      setFilteredPost(filter);
+      setSearching(false);
+    },
+    searching ? 200 : null
+  );
 
   useEffect(() => {
     if (!keyword.length) {
@@ -22,17 +38,18 @@ const Home: NextPage<Posts> = ({ posts }: Posts) => {
     }
     setSearching(true);
 
-    const searchAction = setInterval(() => {
-      const searchKeyword = [...posts].filter(
-        (post) =>
-          post.title.toLowerCase().includes(keyword.toLowerCase()) ||
-          post.tags.toLowerCase().includes(keyword.toLowerCase())
-      );
-      setFilteredPost(searchKeyword);
-      setSearching(false);
-    }, 200);
+    // const timer = setTimeout(() => {
+    //   console.log("filtering");
+    //   const searchKeyword = posts.filter(
+    //     (post) =>
+    //       post.title.toLowerCase().includes(keyword.toLowerCase()) ||
+    //       post.tags.toLowerCase().includes(keyword.toLowerCase())
+    //   );
+    //   setFilteredPost(searchKeyword);
+    //   setSearching(false);
+    // }, 500);
 
-    return () => clearInterval(searchAction);
+    // return () => clearTimeout(timer);
   }, [keyword, posts]);
 
   return (

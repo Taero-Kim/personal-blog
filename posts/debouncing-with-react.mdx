@@ -1,0 +1,171 @@
+---
+title: 디바운싱과 쓰로틀링 in React
+date: 2022.08.17
+author: hulk
+slogan: 즐겁게 코딩하고 항상 성장하고 싶은 개발자입니다.
+tags: "#React #debouncing #useEffect"
+category: tech
+content: 디바운싱은 연이어 발생한 이벤트를 그룹화하여 한 번에 처리하는 방식입니다. <br />일반적으로 연이어 호출되는 함수들 중에서 처음이나 마지막의 함수만 호출되도록 하죠. 쓰로틀링
+thumbnail: https://cdn.discordapp.com/attachments/1002228584401870871/1010104389148622918/Debouncing_in_React.png
+---
+
+디바운싱은 이벤트를 제어하기 위한 프로그래밍의 기법 중 하나입니다.
+
+# 디바운싱 (debouncing)
+
+디바운싱은 연이어 발생한 이벤트를 그룹화하여 한 번에 처리하는 방식입니다. <br />일반적으로 연이어 호출되는 함수들 중에서 처음이나 마지막의 함수만 호출되도록 하죠.
+
+![디바운싱](https://cdn.discordapp.com/attachments/1002228584401870871/1010071566123532328/9d0d5d9c795ac923.png)
+
+사진을 보면 조금 더 직관적으로 이해가 갈 것입니다. 처음 실행하는 함수를 처리하냐 마지막에 실행하는 함수를 처리하냐에 따라서 leading edge와 trailing edge로 구분하기도 합니다.
+
+[사진 출처 : TOMKE DEV](https://tomekdev.com/posts/throttle-vs-debounce-on-real-examples)
+
+## 실제 사용 사례
+
+저는 이 디바운싱 기법을 주로 onChange 이벤트가 발생하는 인풋에 활용합니다.
+제 블로그에 직접 만든 **글 검색** 인풋을 예시로 보여드리겠습니다.
+
+### 인풋(글 검색) 기능 명세
+
+간단하게 먼저 구현하고 싶은 기능에 대해 설명드리면 input 검색창에 유저의 입력을 받아 onChange 이벤트가 발생할 때마다 `keyword`라는 상태를 변경시키고, 그 `keyword`의 상태를 `useEffet`의 의존성 배열에 추가하여 `keyword`의 상태가 변경될 때마다 제가 가진 모든 `post`의 목록에서 해당 `keyword`를 포함한 `post` : (`filteredPost`)만 필터 해서 렌더링 하려 합니다.
+
+**디바운싱 적용 x**
+
+```js
+  ...
+  const [keyword, setKeyword] = useState("")
+
+  useEffect(() => {
+    if (!keyword.length) {
+      setFilteredPost(posts);
+      return;
+    }
+
+    console.log("filtering");
+    const search = posts.filter(
+      (post) =>
+        post.title.toLowerCase().includes(keyword.toLowerCase())
+    );
+
+    setFilteredPost(search);
+  }, [keyword, posts]);
+
+return (
+  <>
+    ...
+    <input onChange={(e) => setKeyword(e.target.value)}
+  </>
+)
+```
+
+처음에는 위처럼 접근하는 게 일반적일 것입니다. 작동도 잘 합니다. 하지만 당연하게도 모든 인풋 타이핑마다 해당 로직이 반복적으로 실행된다는 것을 확인할 수 있습니다. 아래 사진의 콘솔 창을 참고하세요.
+![no-debouncing](https://cdn.discordapp.com/attachments/1002228584401870871/1010083532309278730/no-debouncing.gif)
+로컬에서 테스트한 해당 케이스는 솔직히 이대로 놔둬도 큰 무리는 없어 보입니다. 하지만 조금 더 복잡한 경우를 생각해 보죠.
+
+예를 들어 인풋에 아이디를 입력하면 실시간으로 그 아이디가 중복되었는지 http 요청을 날려 확인하는 경우가 있습니다. 이 경우 모든 타이핑마다 매번 http 요청을 날리는 것은 바람직하지 않을 것입니다. 성능상의 이슈가 발생할 수도 있죠.
+
+대신에 유저가 아이디를 타이핑하는 동안(연속적인 빠른 이벤트가 발생하는 동안) 조금 기다렸다가, 유저가 비로소 타이핑을 멈추면(일정 시간이 지나면) 그때까지 입력된 값을 마지막에 한 번 요청을 보내는 게 조금 더 바람직해 보입니다. 이것이 디바운싱 기법입니다. **입력(이벤트)을 그룹화**하는 것이죠.
+
+### 그래서 어떻게 해볼까?
+
+유저의 입력을 받고 일정 시간이 지난 후에 원하는 함수들을 호출해야 하므로 브라우저 API인 `setTimeout()`을 떠올려 볼 수 있습니다. 우선 위에 썼던 로직을 `setTimeout()`으로 감싸고 딜레이를 500ms 줘보겠습니다.
+
+**첫 시도 : setTimeout 단순 적용**
+
+```js
+  ...
+  const [keyword, setKeyword] = useState("")
+
+  useEffect(() => {
+    if (!keyword.length) {
+      setFilteredPost(posts);
+      return;
+    }
+
+    setTimeot(() => {
+        console.log("filtering");
+        const search = posts.filter(
+          (post) =>
+            post.title.toLowerCase().includes(keyword.toLowerCase())
+        );
+
+        setFilteredPost(search);
+    }, 500)
+
+  }, [keyword, posts]);
+
+return (
+  <>
+    ...
+    <input onChange={(e) => setKeyword(e.target.value)}
+  </>
+)
+```
+
+그럴듯해 보이지만, 콘솔 창을 확인하면 여전히 모든 타이핑에 대해 함수를 호출하고 있습니다. 다만 500ms 딜레이 돼서 나타날 뿐이죠.
+
+![setTimeout-no-cleanup](https://cdn.discordapp.com/attachments/1002228584401870871/1010090230575014069/just-settimeout.gif)
+
+### setTimeout, 무엇이 문제였을까?
+
+어떻게 보면 당연한 결과입니다. 모든 타이핑 입력에 타이머를 달아놨고, 설정한 500ms 이후에 타이머에 설정된 함수를 호출한 것이죠. 참고할 만한 사항은 `setTimeout()`은 브라우저 내장 API로 `React`와 완전 독립적으로 작동하며 컴포넌트가 재렌더링 된다고 해서 변하지도 않습니다.
+이와 관련된 내용은 추후 `useEffet` 관련 포스팅에서 다뤄보겠습니다.
+
+이를 해결하기 위해서는 마지막 타이핑을 제외하고, 그전에 발생되는 각각의 타이핑(인풋 입력)에 설정된 타이머를 컴포넌트가 재렌더링 되기 전에 제거해 줘야 합니다.
+
+### 해결 : useEffect 클린업 & timeoutID
+
+`setTimeout()`은 생성한 타이머를 식별하기 위해 `timeoutID`를 반환합니다. 그 값을 `clearTimeout()`에 전달하면 해당 타이머를 해제할 수 있습니다. 그럼 `clearTimeout()`을 어디에 사용해야 할까요?
+
+```js
+  ...
+  const [keyword, setKeyword] = useState("")
+
+  useEffect(() => {
+    if (!keyword.length) {
+      setFilteredPost(posts);
+      return;
+    }
+
+    // 타이머를 세팅하고 그 반환값인 식별자를 변수에 담는다.
+    const timer = setTimeot(() => {
+        console.log("filtering");
+        const search = posts.filter(
+          (post) =>
+            post.title.toLowerCase().includes(keyword.toLowerCase())
+        );
+
+        setFilteredPost(search);
+    }, 500)
+
+    // useEffect의 리턴부에 타이머를 해제시킨다.(클린업)
+    return () => clearTimeout(timer)
+
+  }, [keyword, posts]);
+
+return (
+  <>
+    ...
+    <input onChange={(e) => setKeyword(e.target.value)}
+  </>
+)
+```
+
+`useEffect` 훅에 리턴 값으로 함수를 설정하면 컴포넌트가 재렌더링 되기 전에 해당 함수를 실행합니다. 따라서 `useEffect`훅의 리턴부에 `clearTimeout()`을 실행하도록 함수를 작성하면 됩니다.
+(`useEffect`의 리턴부는 클린업 함수라고도 하는데 이는 추후 다른 포스팅에서 다뤄보겠습니다.)
+
+    1. 인풋 이벤트 발생
+    2. setTimeout()으로 타이머 설정
+    3. 인풋 입력 상태 값 변경
+    4. `useEffect` 리턴 값인 함수 실행 (`clearTimeout()` : 타이머 해제)
+    5. 컴포넌트 재 렌더링
+
+간단하게 이와 같은 과정으로 재렌더링이 이루어지는데, 중요한 점은 이번엔 타이핑이 발생하여 인풋 입력의 state가 변하면 매번 타이머를 계속 가지고 있는 것이 아니라 컴포넌트가 재렌더링 되기 전에 각각의 타이머를 해제 시켜 결국엔 **마지막의 타이머만 실행**되게 하는 것입니다.
+
+![debouncing-with-cleanup](https://cdn.discordapp.com/attachments/1002228584401870871/1010098949031481374/debouncing-cleanup.gif)
+
+이제 입력을 빠르게 하면(500ms의 딜레이가 없으면) 마지막의 타이머 하나만 실행되는 것을 볼 수 있습니다. 콘솔 창에도 로그가 하나만 찍히고 있습니다.
+이렇게 React에서는 `useEffect`와 브라우저의 `setTimeout()`을 활용해 간단하게 디바운싱 기법을 구현할 수 있습니다.
+
+다음 포스팅에서는 또 하나의 프로그래밍 기법인 쓰로틀링(Throttling)에 대해서 다뤄보도록 하겠습니다.

@@ -1,4 +1,3 @@
-// import { readdirSync, writeFileSync } from "fs";
 const fs = require("fs");
 
 const BASE_URL = "https://www.taero.blog";
