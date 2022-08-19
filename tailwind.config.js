@@ -41,12 +41,12 @@ module.exports = {
           "100%": { opacity: 0, transform: "translateX(-50%)" },
         },
         toggleDark: {
-          "0%": { opacity: 0, transform: "rotate(-45deg)" },
-          "100%": { opacity: 1, transform: "rotate(0deg)" },
+          "0%": { opacity: 0, transform: "rotate(-45deg) scale(0.5)" },
+          "100%": { opacity: 1, transform: "rotate(0deg) scale(1)" },
         },
         toggleLight: {
-          "0%": { opacity: 0, transform: "rotate(0deg)" },
-          "100%": { opacity: 1, transform: "rotate(45deg)" },
+          "0%": { opacity: 0, transform: "rotate(0deg) scale(0.5)" },
+          "100%": { opacity: 1, transform: "rotate(45deg) scale(1)" },
         },
       },
       animation: {

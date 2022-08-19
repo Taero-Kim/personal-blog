@@ -36,11 +36,19 @@ const PostDetail: NextPage<PostDetailProps> = ({
       <Head>
         <title>{data.title}</title>
         <meta charSet="UTF-8" />
-        <meta name="description" content={`${data.content}`} />
+        <meta name="description" content={data.content} />
+        <meta name="description" content={data.tags} />
+        <meta property="og:image" content={data.thumbnail} />
+        <meta
+          property="og:url"
+          content={`https://taero.blog/${data.fileName}`}
+        />
+        <meta property="og:description" content={data.content} />
+        <meta property="og:title" content={data.title} />
         <link
           rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/styles/base16/dracula.min.css"
-        ></link>
+        />
       </Head>
 
       <PostTopSection data={data} />
@@ -78,12 +86,12 @@ export const getStaticProps: GetStaticProps = async (context) => {
     return { ...data, fileName: file };
   });
 
-  const filteredPosts: any = posts.sort(
-    (a: any, b: any) => new Date(b.date).valueOf() - new Date(a.date).valueOf()
+  const filteredPosts = posts.sort(
+    (a, b) => new Date(b.date).valueOf() - new Date(a.date).valueOf()
   );
 
   const currentPostIndex = filteredPosts.findIndex(
-    (item: any) => item.fileName === context?.params?.slug
+    (item) => item.fileName === context?.params?.slug
   );
 
   const prevPost = {

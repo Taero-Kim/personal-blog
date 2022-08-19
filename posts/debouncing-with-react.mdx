@@ -1,5 +1,5 @@
 ---
-title: 디바운싱과 쓰로틀링 in React
+title: 디바운싱 with React.useEffect
 date: 2022.08.17
 author: hulk
 slogan: 즐겁게 코딩하고 항상 성장하고 싶은 개발자입니다.
@@ -166,6 +166,52 @@ return (
 ![debouncing-with-cleanup](https://cdn.discordapp.com/attachments/1002228584401870871/1010098949031481374/debouncing-cleanup.gif)
 
 이제 입력을 빠르게 하면(500ms의 딜레이가 없으면) 마지막의 타이머 하나만 실행되는 것을 볼 수 있습니다. 콘솔 창에도 로그가 하나만 찍히고 있습니다.
+
+### 최종 코드
+
+```js
+  ...
+  const [keyword, setKeyword] = useState("")
+  const [searching, setSearching] = useState(false);
+
+  useEffect(() => {
+    if (!keyword.length) {
+      setFilteredPost(posts);
+      setSearching(false)
+      return;
+    }
+
+    // 로딩 state
+    setSearching(true);
+
+    // 타이머를 세팅하고 그 반환값인 식별자를 변수에 담는다.
+    const timer = setTimeot(() => {
+        const search = posts.filter(
+          (post) =>
+            post.title.toLowerCase().includes(keyword.toLowerCase())
+        );
+
+        setFilteredPost(search);
+        setSearching(false); // 로딩 초기화
+    }, 200)
+
+    // useEffect의 리턴부에 타이머를 해제시킨다.(클린업)
+    return () => clearTimeout(timer)
+
+  }, [keyword, posts]);
+
+return (
+  <>
+    ...
+    <input onChange={(e) => setKeyword(e.target.value)}
+
+    {searching ? <Loading /> : <PostList post={filteredPost} />
+  </>
+)
+```
+
+최종적으로 제 블로그 검색창은 디바운싱 타이머를 200ms로 줄이고 (500ms는 너무 답답했죠?)<br />찰나의 순간이지만 직관성을 위해 로딩 컴포넌트를 만들었습니다. 아래는 최종 완성 화면입니다. UX 적으로 훨씬 개선된 것 같습니다.
+![debouncing-final](https://cdn.discordapp.com/attachments/1002228584401870871/1010267692034428979/debouncing-final.gif)
 이렇게 React에서는 `useEffect`와 브라우저의 `setTimeout()`을 활용해 간단하게 디바운싱 기법을 구현할 수 있습니다.
 
 다음 포스팅에서는 또 하나의 프로그래밍 기법인 쓰로틀링(Throttling)에 대해서 다뤄보도록 하겠습니다.

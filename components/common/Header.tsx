@@ -65,9 +65,9 @@ const Header = ({ dark, setDark }: HeaderProps) => {
               ))}
 
               {dark ? (
-                <LightMode onClick={() => setDark(false)} />
+                <DarkMode onClick={() => setDark(false)} />
               ) : (
-                <DarkMode onClick={() => setDark(true)} />
+                <LightMode onClick={() => setDark(true)} />
               )}
             </div>
           </div>
@@ -87,9 +87,9 @@ const Header = ({ dark, setDark }: HeaderProps) => {
             </div>
 
             {dark ? (
-              <LightMode onClick={() => setDark(false)} />
+              <DarkMode onClick={() => setDark(false)} />
             ) : (
-              <DarkMode onClick={() => setDark(true)} />
+              <LightMode onClick={() => setDark(true)} />
             )}
           </div>
         </div>
