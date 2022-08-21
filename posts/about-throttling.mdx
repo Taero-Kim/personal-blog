@@ -1,0 +1,181 @@
+---
+title: 인풋 이벤트에 Throttling 적용하기
+date: 2022.08.19
+author: hulk
+slogan: 즐겁게 코딩하고 항상 성장하고 싶은 개발자입니다.
+tags: "#throttling #debouncing"
+category: tech
+content: 쓰로틀링은 설정한 타이머 시간 동안은 요청을 무시하지만 타이머 시간이 지나면 주기적으로 다시 요청을 허용하는 방식입니다. 디바운싱과는 근본적으로 차이가 있죠. 위 사진을 참고하시면 차이점이 직관적으로 보일 겁니다.
+thumbnail: https://cdn.discordapp.com/attachments/1002228584401870871/1010936569198288976/Throttling.png
+---
+
+바로 지난번 포스팅에서 디바운싱에 대해 다뤄 보았습니다.<br />
+[태로 블로그 : 디바운싱 in React](https://taero.blog/debouncing-with-reacdt)
+
+이번 포스팅에서는 디바운싱과 같이 자주 등장하는 쓰로틀링이라는 기법에 대해서 살펴보겠습니다.<br />
+**쓰로틀링(throttling)**도 디바운싱(debouncing)과 마찬가지로 이벤트를 제어하기 위한 프로그래밍 기법 중 하나입니다.
+
+# 쓰로틀링 (Throttling)
+
+쓰로틀링은 이벤트를 일정 주기마다 발생하도록 하는 방식입니다.
+![debouncing vs throttling](https://cdn.discordapp.com/attachments/1002228584401870871/1010159170739245106/debouncing-vs-throttling.png)
+
+디바운싱과는 근본적으로 차이가 있죠.
+위 사진을 참고하시면 차이점이 직관적으로 보일 겁니다.
+**디바운싱**은 설정한 타이머 시간 동안 처음(leading edge)이나 마지막(trailing edge)에 한 번 요청이 처리되고 나머지 요청은 무시합니다.
+
+반면에, **쓰로틀링**은 설정한 타이머 시간 동안은 요청을 무시하지만 타이머 시간이 지나면 주기적으로 다시 요청을 허용하는 방식입니다.
+
+## 실제 사용 사례
+
+일반적으로 쓰로틀링은 브라우저 스크롤 이벤트에 자주 사용되곤 합니다. 하지만 저는 먼저, 지난번 포스팅 때 다뤘던 제 블로그 검색창 인풋 onChange에 걸려있던 디바운싱을 쓰로틀링으로 변경해 보겠습니다.
+
+지난번 디바운싱 포스팅이 궁금하시다면 아래 링크를 참고해 주세요.
+[태로 블로그 : 디바운싱 in React](https://taero.blog/debouncing-with-reacdt)
+
+```js
+  ...
+  const [keyword, setKeyword] = useState("")
+  const [searching, setSearching] = useState(false);
+
+  useEffect(() => {
+    if (!keyword.length) {
+      setFilteredPost(posts);
+      return;
+    }
+
+    // 로딩 상태 변경
+    setSearching(true);
+
+    // 타이머를 세팅하고 그 반환값인 식별자를 변수에 담는다.
+    const timer = setTimeot(() => {
+        console.log("filtering");
+        const search = posts.filter(
+          (post) =>
+            post.title.toLowerCase().includes(keyword.toLowerCase())
+        );
+
+        setFilteredPost(search);
+        setSearching(false); // 로딩 상태 초기화
+    }, 500)
+
+    // useEffect의 리턴부에 타이머를 해제시킨다.(클린업)
+    return () => clearTimeout(timer)
+
+  }, [keyword, posts]);
+
+return (
+  <>
+    ...
+    <input onChange={(e) => setKeyword(e.target.value)}
+  </>
+)
+```
+
+결과적으로 인풋에 타이핑을 다 완료하고 설정한 타이머 시간(500ms)가 지나야 마지막에 한 번만 원하는 함수를 호출하는 형태였습니다.
+
+결과는 아래와 같습니다.
+![debouncing-with-loading](https://cdn.discordapp.com/attachments/1002228584401870871/1010163093168476220/debouncing-with-loading.gif)
+
+이대로도 그럴듯한 것 같습니다. 검색창에 키워드가 모두 입력이 되고 나서 한 번에 결과를 보여주고 있습니다.
+
+### UX 상의 아쉬움 (디바운싱)
+
+하지만 여기서 UX를 위해 조금만 더 개선해 보면 어떨까 하는 생각이 들었습니다.
+예를 들어 지금 디바운싱이 적용된 상태에서는 타이핑하면 마지막에 딱 한 번 해당 키워드에 해당되는 포스트들을 필터하고 로딩 상태를 `false`로 만듭니다.
+결과적으로 로딩 상태가 `true`가 되었다가 `false`로 다시 초기화되는 동안(로딩되는 동안)은 그 어떤 필터링 결과도 보지 못한 채 로딩 컴포넌트만 보고 있어야 하는 것이죠.
+
+사실 실제 사용엔 크게 체감이 안되는 케이스인 것 같긴합니다만, 쓰로틀링과의 차이를 명확히 보여드리기 위해 제가 긴 문자열을 빠른 속도로 대략 5초동안 타이핑 해보겠습니다.
+
+![debouncing-with-fast-typing](https://cdn.discordapp.com/attachments/1002228584401870871/1010921586213269585/debouncing-with-fast-typing.gif)
+
+### 로딩 중간중간 필터링 된 검색 결과를 노출시켜주자.
+
+그래서 타이핑하는 동안 주기적으로 중간 결과를 보여주는 것이 조금 더 좋을 것 같다고 판단했습니다. 물론 모든 타이핑에 반응하는 것은 아니죠. 적절한 타이머를 주어서 중간중간 해당 인풋 입력 상태 값에 대한 함수 호출 결과를 보여주고 싶었습니다. 이 경우 쓰로틀링 기법을 적용하는 것이 좋다는 판단을 했습니다.
+
+### 적용 방법
+
+방법은 여러 가지가 있지만, 저는 브라우저의 `setTimeout()` API를 활용하여 구현했던 디바운싱을 조금 응용하는 방법을 채택했습니다.
+바로 코드를 보여드리겠습니다.
+
+### 쓰로틀링 인풋 구현 코드
+
+```js
+  ...
+  const [keyword, setKeyword] = useState("")
+  const [searching, setSearching] = useState(false);
+
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setKeyword(e.target.value);
+    if (searching) return;
+    if (!searching) {
+      setSearching(true);
+      setTimeout(() => {
+        const searchKeyword = posts.filter(
+          (post) =>
+            post.title.toLowerCase().includes(keyword.toLowerCase())
+        );
+        setFilteredPost(searchKeyword);
+        setSearching(false);
+      }, 200);
+    }
+  };
+
+  useEffect(() => {
+    if (!keyword.length) {
+      setFilteredPost(posts);
+      return;
+    }
+
+    // ****** 기존 디바운싱 적용 코드 *****
+    // setSearching(true);
+    // const timer = setTimeot(() => {
+    //    const search = posts.filter(
+    //    (post) =>
+    //       post.title.toLowerCase().includes(keyword.toLowerCase())
+    //    );
+
+    //  setFilteredPost(search);
+    //  setSearching(false); // 로딩 초기화
+    //  }, 200)
+
+    // useEffect의 리턴부에 타이머를 해제시킨다.(클린업)
+    // return () => clearTimeout(timer)
+  }, [keyword, posts]);
+
+return (
+  <>
+    ...
+    <input onChange={handleInputChange} />
+  </>
+)
+```
+
+`useEffect` 훅 내에 주석 처리된 부분이 기존에 디바운싱을 적용하기 위하여 작성했던 코드입니다.
+디바운싱에서는 200ms 내에 키워드 입력 이벤트가 계속 발생한다면 `useEffect` 훅을 사용해 기존의 타이머를 clear 시키고 새로운 200ms 타이머를 적용했었죠. 그래서 결과적으로 200ms 내에 아주 빠른 속도의 타이핑을 한다면 위에서 봤던 것처럼 계속 로딩 컴포넌트가 표시되고 그 어떤 결과도 볼 수 없었습니다. 모든 타이핑이 끝나고 200ms가 지나서야 비로소 마지막에 딱 한 번 원하는 함수를 호출했었습니다.
+
+쓰로틀링에서는 이벤트가 인풋 `onChange` 이벤트가 발생하는 동안
+
+- 우선 먼저 `searching` 상태를 확인합니다.
+- 이벤트가 발생 중인데 `searching` 되고 있다면 아무것도 하지 않고 리턴합니다.
+- 이벤트가 발생 중인데 `searching`외 되지 않고 있다면 `searching` 상태를 `true`로 변경합니다.
+- 그리고 200ms 이후에 실제 원하는 작업을 하는 타이머를 생성합니다.
+- 타이머 작업의 마지막엔 `searching`의 상태를 다시 `false`로 변경합니다.
+
+결과적으로 지속적으로 빠르게 타이핑 이벤트가 발생한다는 가정하에, 200ms 주기로 원하는 작업을 수행하는 것입니다.
+
+`searching` 상태가 `true`이면 아무것도 반환하지 않기 때문에 타이머에 설정한 200ms이라는 시간 동안은 원하는 작업이 오직 한 번만 호출됩니다.
+
+아래는 적용한 결과 화면입니다.
+![throttling](https://cdn.discordapp.com/attachments/1002228584401870871/1010932068416495686/throttling-input.gif)
+
+아까 디바운싱의 화면에서는 빠르게 타이핑하는 동안은 계속 로딩 컴포넌트가 보였던 것에 반해, 쓰로틀링에서는 자세히 보시면 중간중간 입력값에 대한 결과를 피드백해 주고 있는 걸 보실 수 있습니다.
+
+### 마무리 (디바운싱 vs 쓰로틀링)
+
+디바운싱과 쓰로틀링의 차이를 다시 한번 명확히 할 필요가 있습니다.
+**디바운싱**은 설정한 타이머 시간동안 이벤트에 따른 요청이 지속적으로 들어오는 경우 모든 요청을 무시합니다. 그리고 마지막에 한 번만 요청을 실행하죠.
+
+하지만, **쓰로틀링**은 이벤트에 따른 요청이 지속적으로 들어오는 경우 설정한 타이머 시간이 지나면 해당 요청을 허용하여 주기적으로 요청이 실행될 수 있도록 합니다.
+
+저는 디바운싱과 쓰로틀링 모두 간단한 인풋의 이벤트를 통해 구현해 보았지만 일반적으로는 성능상 이슈가 많이 발생하는 스크롤에 더 많이 사용됩니다. 기회가 된다면 스크롤 이벤트가 발생하는 환경에서 조금 더 무거운 작업을 요청해야하는 경우를 블로그에 다뤄보겠습니다.

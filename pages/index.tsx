@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 
 import matter from "gray-matter";
 import { readdirSync, readFileSync } from "fs";
@@ -17,6 +17,23 @@ const Home: NextPage<Posts> = ({ posts }: Posts) => {
   const [keyword, setKeyword] = useState("");
   const [searching, setSearching] = useState(false);
 
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setKeyword(e.target.value);
+    if (searching) return;
+    if (!searching) {
+      setSearching(true);
+      setTimeout(() => {
+        const searchKeyword = posts.filter(
+          (post) =>
+            post.title.toLowerCase().includes(keyword.toLowerCase()) ||
+            post.tags.toLowerCase().includes(keyword.toLowerCase())
+        );
+        setFilteredPost(searchKeyword);
+        setSearching(false);
+      }, 200);
+    }
+  };
+
   useEffect(() => {
     if (!keyword.length) {
       setFilteredPost(posts);
@@ -24,19 +41,18 @@ const Home: NextPage<Posts> = ({ posts }: Posts) => {
       return;
     }
 
-    setSearching(true);
+    // setSearching(true);
+    // const timer = setTimeout(() => {
+    //   const searchKeyword = posts.filter(
+    //     (post) =>
+    //       post.title.toLowerCase().includes(keyword.toLowerCase()) ||
+    //       post.tags.toLowerCase().includes(keyword.toLowerCase())
+    //   );
+    //   setFilteredPost(searchKeyword);
+    //   setSearching(false);
+    // }, 200);
 
-    const timer = setTimeout(() => {
-      const searchKeyword = posts.filter(
-        (post) =>
-          post.title.toLowerCase().includes(keyword.toLowerCase()) ||
-          post.tags.toLowerCase().includes(keyword.toLowerCase())
-      );
-      setFilteredPost(searchKeyword);
-      setSearching(false);
-    }, 200);
-
-    return () => clearTimeout(timer);
+    // return () => clearTimeout(timer);
   }, [keyword, posts]);
 
   return (
@@ -53,7 +69,11 @@ const Home: NextPage<Posts> = ({ posts }: Posts) => {
         <meta property="og:description" content="태로의 개발 공부 여정" />
         <meta property="og:title" content="태로샐러드" />
       </Head>
-      <SearchBar keyword={keyword} setKeyword={setKeyword} />
+      <SearchBar
+        keyword={keyword}
+        setKeyword={setKeyword}
+        handleInputChange={handleInputChange}
+      />
       {searching ? (
         <Loading />
       ) : filteredPost.length ? (

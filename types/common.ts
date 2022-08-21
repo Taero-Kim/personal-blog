@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction } from "react";
+import { ChangeEvent, Dispatch, SetStateAction } from "react";
 
 export interface CarouselContent {
   id: number;
@@ -20,4 +20,5 @@ export interface DrawerProps {
 export interface SearchBarProps {
   keyword: string;
   setKeyword: Dispatch<SetStateAction<string>>;
+  handleInputChange: (event: ChangeEvent<HTMLInputElement>) => void;
 }
