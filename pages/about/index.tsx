@@ -13,9 +13,13 @@ const About = () => {
         </div>
       </div>
       <div className="h-[2px] bg-[#E9ECEF] dark:bg-gray-400"></div>
-      <div className="py-4 text-black40 dark:text-darkPText">
+      <div className="pt-4 text-black40 dark:text-darkPText">
         개발, 기획, 인사이트 등을 나가는 공간입니다. <br />
         좋은 개발자로 성장하고 싶은 주니어 개발자입니다.
+      </div>
+
+      <div className="py-4 text-black40 dark:text-darkPText">
+        본 블로그는 NEXT.js와 React를 활용하여 직접 제작하였습니다. <br />
       </div>
 
       <div className="text-black40 dark:text-darkPText">
