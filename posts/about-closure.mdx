@@ -1,0 +1,165 @@
+---
+title: 어휘적 환경과 클로저의 기본 개념
+date: 2022.08.22
+author: hulk
+slogan: 즐겁게 코딩하고 항상 성장하고 싶은 개발자입니다.
+tags: "#javascript #closure"
+category: tech
+content: 클로저란 함수와 함수가 선언된 어휘적(lexical) 환경의 조합을 통해 내부 함수가 외부 함수의 변수에 접근할 수 있는 것을 말합니다.어휘적 환경은 특정 코드가 작성되고 정의된 환경을 뜻합니다. 클로저를 이해하기 위해 필수적인 개념이죠.
+thumbnail: https://cdn.discordapp.com/attachments/1002228584401870871/1011220299213176893/Closure.png
+---
+
+클로저의 배경과 기본 개념에 대해서 다뤄보려 합니다. <br />
+저에게는 항상 헷갈리는 주제이지만 이번 포스팅을 통해 머릿속에 더 오래 남길 바라면서 정리해 보겠습니다.
+
+### 클로저란?
+
+- 함수와 함수가 선언된 어휘적(lexical) 환경의 조합을 통해 내부 함수가 외부 함수의 변수에 접근할 수 있는 것을 말합니다.
+
+어휘적 환경이란 무엇일까요?
+
+### 어휘적(lexical) 환경
+
+- 어휘적 환경은 특정 코드가 작성되고 정의된 환경을 뜻합니다. 클로저를 이해하기 위해 필수적인 개념이죠.
+
+간단한 예시를 통해 알아보겠습니다.
+
+```javascript
+let name = "rotae";
+
+function myName() {
+  let name = "taero";
+  function displayMyName() {
+    return name;
+  }
+  diplayMyName();
+}
+
+myName(); // "taero"
+```
+
+위 코드에서 myName 함수는 리턴 값으로 taero를 출력합니다.
+1번 줄의 name이 아닌 myName 함수 내부의 name 값을 출력하는 이유는 지역변수가 우선하기 때문입니다.
+즉, displayMyName 함수의 name 변수는 myName의 name 변수를 참조하는 것입니다.
+myName 함수 범위 밖에 아무리 name 변수가 새로 선언되어도 변하지 않습니다.
+myName 함수의 name 변수는 **변하지 않는 특정한 어휘적 환경**을 따르고 있기 때문입니다.
+
+이를 염두에 두고 클로저를 살펴보겠습니다.
+
+### 클로저
+
+- 클로저는 간단하게는 자신이 생성될 당시의 환경(어휘적 환경)을 기억하는 함수입니다.
+- 그리고 핵심은 내부 함수가 외부 함수의 변수에 접근할 수 있어야 한다는 것이죠.
+
+```javascript
+const adder = function (x) {
+  return function (y) {
+    return x + y;
+  };
+};
+
+const add5 = adder(5);
+const add10 = adder(10);
+```
+
+일반적인 함수는, 함수 실행이 종료되면 함수 내부의 변수를 사용할 수 없다.
+하지만 위 예시의 `add5`를 보면 `adder` 함수에서 x에 5라는 값을 받아 계속 유지시키고 있습니다.
+즉, `adder`라는 외부 함수가 종료되었는데도 `adder`의 x라는 변수에 5라는 값이 메모리에 저장되는 것입니다.
+따라서, `add5`라는 새롭게 탄생한 함수로
+
+```javascript
+add5(7); // 12
+add5(10); // 15
+add10(7); // 17
+add10(10); // 20
+```
+
+이와 같은 계산을 할 수 있는 것이죠.
+
+> 여기서 짚고 넘어가야 할 것은 add5는 add10과 같은 함수 본문을 공유하지만,<br />
+> 서로 다른 어휘적(lexical) 환경을 저장한다는 점입니다.<br />
+> add5의 어휘적(lexical) 환경에서의 x는 5를 나타내고<br />
+> add10의 어휘적(lexical) 환경에서의 x는 10을 나타냅니다.
+
+### 클로저를 통한 모듈화
+
+위에서 클로저 함수의 특징을 잘 활용하면,
+내부 함수를 단 하나만 리턴하지 않고, **객체에 담아** 여러 기능을 하는 다수의 내부 함수를 리턴할 수도 있습니다.
+이것을 **클로저 모듈 패턴**이라고 부릅니다. 이는 캡슐화라고도 하는데, 캡슐화는 실제 구현 내용의 일부를 외부에 감추어 은닉하는 것입니다.
+
+예시를 보면 조금 더 직관적인 이해가 가능합니다.
+
+```javascript
+const makeCounter = () => {
+  let privateValue = 0;
+
+  return {
+    increase: () => {
+      privateValue++;
+    },
+    decrease: () => {
+      privateValue--;
+    },
+    getPrivateValue: () => {
+      return privateValue;
+    },
+  };
+};
+
+const counter1 = makeCounter();
+counter1.increase();
+counter1.increase();
+counter1.decrease();
+counter1.getPrivateValue(); //  1
+
+const counter2 = makeCounter();
+counter2.decrease();
+counter2.increase();
+counter2.decrease();
+counter2.getPrivateValue(); //  -1
+```
+
+위의 `counter1`과 `counter2`는 `privateValue`를 각각 독립적으로 관리하며 밖으로 노출시키지 않습니다. 이를 통해 `privateValue` 변수는 외부로부터 오염되지 않습니다.
+
+### 클로저를 통한 커링(currying) 패턴 구현
+
+커링이란 함수 하나에 n개의 인자를 받는 대신 n개의 클로저 함수를 만들어 각각의 클로저 함수들이 인자를 받게 하는 방법입니다.
+
+```js
+const add = (x, y, z) => {
+  return x + y + z;
+};
+```
+
+위와 같은 함수에서는 x, y, z 3개의 인자를 모두 한꺼번에 지정해 줘야 원하는 값을 얻을 수 있습니다. 재사용이 불가능하죠.<br />
+커링을 활용하면 특정 인자를 재사용할 수 있습니다.
+
+```js
+const curryingAdd = (x) => {
+   return (y) => {
+      return (z) => {
+         return x+y+z;
+      }
+   }
+}
+
+위 함수를 한줄로 표현하면
+const curryingAdd = (x) => (y) => (z) => x + y + z;
+
+const plus1 = curryingAdd(1);   // 1 이라는 값 재사용
+const plus1And3 = plus1(3);     // 1과 3이라는 값 재사용
+
+plus1And3(5)                // 9
+plus1And3(10)               // 14
+plus1And3(20)               // 24
+```
+
+커링은 위와 같은 예시처럼 특정 인자를 재사용할 수 있도록 하는 기법입니다.
+
+### 마무리
+
+클로저의 원래 함수가 선언이 되었던 (어휘적)환경을 기억하고 접근하는 특징을 활용해 위에 소개한 캡슐화, 커링 등의 패턴을 구현할 수 있습니다.
+
+**주의할 점**
+
+- 일반 함수는 함수 실행 종료 후 가비지 컬렉션 대상이 되었을 객체가, 클로저 패턴에서는 메모리 상에 남아있게 됩니다. 외부 함수 스코프가 내부 함수에 의해 언제든지 참조될 수 있기 때문입니다. 그래서 클로저를 남발하면 퍼포먼스 저하가 발생할 수도 있습니다.
