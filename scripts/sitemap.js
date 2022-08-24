@@ -1,6 +1,6 @@
 const fs = require("fs");
 
-const BASE_URL = "https://www.taero.blog";
+const BASE_URL = "https://taero.blog";
 
 (async () => {
   const generateSitemap = (pages) => {
