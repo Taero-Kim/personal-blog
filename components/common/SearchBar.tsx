@@ -20,6 +20,7 @@ const SearchBar = ({
           className="w-full justify-start text-gray-900 outline-none dark:bg-darkInputBg dark:text-darkText dark:placeholder:text-darkText"
           type="text"
         />
+
         {keyword.length ? (
           <img
             onClick={() => setKeyword("")}

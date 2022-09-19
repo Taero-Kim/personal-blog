@@ -69,11 +69,13 @@ const Home: NextPage<Posts> = ({ posts }: Posts) => {
         <meta property="og:description" content="태로의 개발 공부 여정" />
         <meta property="og:title" content="태로샐러드" />
       </Head>
+
       <SearchBar
         keyword={keyword}
         setKeyword={setKeyword}
         handleInputChange={handleInputChange}
       />
+
       {searching ? (
         <Loading />
       ) : filteredPost.length ? (

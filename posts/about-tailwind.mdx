@@ -1,0 +1,178 @@
+---
+title: tailwind css소개, 장단점 (3.0ver 이후)
+date: 2022.09.11
+author: hulk
+slogan: 즐겁게 코딩하고 항상 성장하고 싶은 개발자입니다.
+tags: "#tailwind #css"
+category: tech
+content: tailwind css는 자신들을 utility-first 프레임워크라고 소개하고 있습니다. tailwind에서 제공하는 미리 세팅된 수많은 utility 클래스 명을 활용해 html 코드 내에서 인라인 방식으로 스타일링할 수 있다는 뜻입니다. Bootstrap이나 Ant Design 등의 css 프레임워크가 자신들만의 스타일이 적용된 구성요소들을 제공하는 반면에, tailwind는 정해진 스타일이 없습니다. 제공되는 utility 클래스들은 모두 저수준의 클래스들이기 때문이죠. 따라서 이를 원하는 대로 조합해서 자신이 원하는 스타일을 만들어 낼 수 있습니다.
+thumbnail: https://cdn.discordapp.com/attachments/1002228584401870871/1021396380247404574/tailwind.png
+---
+
+오늘은 제가 평소에 애용하는 tailwind css 프레임워크에 대해서 소개해 보려 합니다.
+
+## 🍫 Utility-first
+
+> A utility-first CSS framework packed with classes like flex, pt-4, text-center and rotate-90 that can be composed to build any design, directly in your markup.
+
+([tailwind css 홈페이지](https://tailwindcss.com))
+tailwind css 홈페이지에 들어가면 메인에 바로 보이는 문구입니다.
+
+자신들을 utility-first 프레임워크라고 소개하고 있습니다. tailwind에서 제공하는 미리 세팅된 수많은 utility 클래스 명을 활용해 html 코드 내에서 인라인 방식으로 스타일링할 수 있다는 뜻입니다.
+
+Bootstrap이나 Ant Design 등의 css 프레임워크가 자신들만의 스타일이 적용된 구성요소들을 제공하는 반면에, tailwind는 정해진 스타일이 없습니다. 제공되는 utility 클래스들은 모두 저수준의 클래스들이기 때문이죠. 따라서 이를 원하는 대로 조합해서 자신이 원하는 스타일을 만들어 낼 수 있습니다.
+
+- 일반적인 css
+
+```css
+.box {
+  display: flex;
+  align-itmes: center;
+  justify-content: center;
+}
+```
+
+```js
+return <div className="box">...</div>;
+```
+
+- tailwind css
+
+```js
+return <div className="flex items-center justify-center">...</div>;
+```
+
+아주 간단한 예시를 들어봤는데요. 위와 같이 기존의 css 문법으로 작성할 수 있는 속성들을 tailwind css에서 해당 속성과 대응되는 utility 클래스들로 대체할 수 있습니다.
+
+- 일반적인 css
+
+```css
+.text {
+  margin-bottom: 2px;
+  background-color: #ff5100;
+  font-size: 14px;
+}
+```
+
+```js
+return <div className="text">...</div>;
+```
+
+- tailwind css
+
+```js
+return <div className="bg-[#F5100] mb-[2px] text-sm">...</div>;
+```
+
+tailwind 의 유틸리티 클래스에서 제공하지 않는 수치나 컬러 등은 위와 같이 대괄호 안에 커스텀 하게 작성하여 사용할 수도 있습니다.
+이러한 인라인 방식 이외에도 `tailwind.config.js`에 기존 tailwind css가 제공하는 theme을 확장해 사용자 정의 스타일을 정의하는 방식도 있습니다.
+
+```js
+module.exports = {
+  theme: {
+  	extend: {
+      marginBottom: {
+        sm: '2px',
+      },
+      backgroundColor: {
+        'custom': '#FF5100',
+      }
+  }
+}
+```
+
+```js
+return <div className="mb-sm bg-custom text-sm">...</div>;
+```
+
+## 🍫 Just-In-Time 컴파일러
+
+tailwind css의 Just-In-Time 컴파일러는 사용자의 코드를 실시간으로 감시하며 필요한 클래스를 생성합니다.
+실시간으로 tailwind의 utility 클래스 명을 인라인에 작성하면, 컴파일러가 그것을 감지해서 css로 변환시켜주는 것이죠. 사용하지 않는 utility 클래스는 프로젝트의 파일에 포함될 일도 없게 됩니다. 따라서 최종적인 css 번들도 아주 가볍게 유지할 수 있는 것이죠.
+
++) 참고로 tailwind css의 3.0버전 릴리즈 이전에는 프로젝트를 빌드 할 때, 모든 파일의 코드를 스캔해서 사용한 utility 클래스명을 제외하고 나머지 사용하지 않는 클래스들을 전부 삭제하는 방식으로 동작했습니다. Just-In-Time 컴파일러 기능을 사용하려면 추가적인 패키지를 설치해서 사용해야 했었죠. 하지만 3.0 버전부터는 이 Just-In-Time 컴파일러가 기본 엔진으로 탑재되었습니다.
+
+## 🍫 장점
+
+### css 클래스 명에 대한 고민 x
+
+- tailwind css가 정해놓은 utility 클래스명을 사용하면 되기 때문에 클래스 명에 대한 고민을 하지 않아도 됩니다.
+- 그렇기 때문에 스타일 자체에만 집중하여 빠른 스타일링을 하고 이후 비즈니스 로직에만 집중하면 됩니다.
+
+### 인라인에서 빠르게 작업
+
+- HTML과 CSS 파일을 왔다 갔다 하며 개발을 하지 않고, 인라인에 바로 css 속성을 적용할 수 있기 때문에 빠른 스타일링이 가능합니다.
+
+### 다양한 modifier
+
+- tailwind에서 제공하는 아주 다양한 modifier를 통해 css에서 사용하는 가상 클래스 등을 아주 간단하게 적용할 수 있습니다.
+
++) 3.0 버전부터는 이 modifier를 중첩된 형태로 사용할 수 있습니다.
+
+ex) 버튼 hover
+
+```js
+<button className="... bg-sky-500 hover:bg-sky-700">Save changes</button>
+```
+
+- 뿐만 아니라 특정 breakpoints마다 다른 스타일을 적용하고 싶을 때 css에서 사용하는 미디어 쿼리도 modifier로 손쉽게 적용할 수 있습니다.
+
+ex) 미디어 쿼리
+
+```js
+<img class="w-16 md:w-32 lg:w-48" src="...">
+```
+
+tailwind에서 기본적으로 제공하는 미디어 쿼리 breakpoints 기준은 아래와 같고, 당연히 `tailwind.config.js`를 통해 사용자 정의도 가능합니다.
+
+```
+sm	640px	@media (min-width: 640px) { ... }
+md	768px	@media (min-width: 768px) { ... }
+lg	1024px	@media (min-width: 1024px) { ... }
+xl	1280px	@media (min-width: 1280px) { ... }
+2xl	1536px	@media (min-width: 1536px) { ... }
+```
+
+## 🍫 단점
+
+### 지저분해지는 마크업
+
+- 인라인에 utility 클래스를 쭉 적는 방식이다 보니 스타일을 추가하다 보면
+  아래 사진과 같이 다소 지저분해 보이는 마크업을 마주할 수 있습니다.
+  ![](https://velog.velcdn.com/images/taero30/post/71f8311f-9924-41f8-a74f-6a0728afef52/image.png)
+
+하지만 이는 tailwind에서 지원하는 `@apply` 라는 지시어로 해결 가능합니다.
+
+```css
+@layer components {
+  .box {
+    @apply ... flex w-full items-center justify-center;
+  }
+}
+```
+
+```js
+return <div className="box">...</div>;
+```
+
+`@apply` 는 반복되는 css 패턴을 클래스로 만들어 사용하는데도 용이합니다.
+
+### 다소 생소한 css 규칙
+
+- 기존에 사용되던 css 규칙이 tailwind css에서 제공하는 어떤 utility 클래스와 대응되는지 확인해야 하고, 그것들이 처음엔 생소하기 때문에 익숙해지는 데는 어느 정도 시간이 걸립니다.
+
+하지만 tailwind css의 공식 문서가 워낙 정리가 잘되어 있어서 확인이 용이하고, tailwind css에서 공식적으로 지원하는 VS code 익스텐션인 Tailwind CSS IntelliSense를 사용하면 정말 금방 익숙해질 수 있습니다.
+
+<PostImage
+  src="https://velog.velcdn.com/images/taero30/post/b070dba2-82af-44c4-a978-ab99420aeafa/image.png"
+  width="800"
+/>
+
+Tailwind CSS IntelliSense는 타이핑한 키워드에 따라 지원하는 utility 클래스 미리 보기, 자동완성, 린팅 등을 지원하기 때문에 tailwind를 사용하실 때 꼭 같이 쓰는 것을 추천드리는 익스텐션입니다.
+
+그렇기 때문에 처음엔 속도가 좀 느려도, 이렇게 조금만 익숙해지면 오히려 기존보다 더 빠르게 스타일링을 적용하게 되실 수 있습니다.
+
+## 🍫 마치며
+
+개인적으로는 정말 좋은 css 프레임워크라고 생각합니다. 또한 위에서 소개한 내용 이외에도 정말 많은 기능, 플러그인 등을 제공하고 있으니 기회가 되시면 한 번 사용해 보시길 추천드립니다.
+공식 홈페이지에는 설치 과정도 아주 친절하게 설명되어 있습니다. 심지어 프레임워크 별로도 설치 과정이 구분되어 있으니 살펴보시고 기화가 있다면 프로젝트에 적용해보셨으면 좋겠습니다. ([tailwind css 설치 가이드 링크](https://tailwindcss.com/docs/installation/framework-guides))
