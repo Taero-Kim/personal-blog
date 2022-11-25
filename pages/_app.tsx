@@ -9,7 +9,7 @@ import Footer from "@components/common/Footer";
 import "../styles/globals.css";
 
 function MyApp({ Component, pageProps }: AppProps) {
-  const [dark, setDark] = useState(false);
+  const [dark, setDark] = useState(true);
 
   useEffect(() => {
     if (dark) document.documentElement.classList.add("dark");
