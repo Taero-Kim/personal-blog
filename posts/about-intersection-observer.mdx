@@ -80,16 +80,18 @@ let observer = new IntersectionObserver(callback, options);
 
 이렇게 정의된 observer 인스턴스에서는 다음과 같은 메소드를 사용할 수 있습니다.
 
-- `IntersectionObserver.observe(targetElement)`
+`intersectionObserver`
+
+- `observe(targetElement)`
   : 타깃 요소에 대한 IntersectionObserver를 등록하여 관찰을 시작하고 싶을 때 사용합니다.
 
-- `IntersectionObserver.unobserve(targetElement)`
+- `unobserve(targetElement)`
   : 특정 타깃 요소에 대한 관찰을 멈추고 싶을 때 사용합니다.
 
-- `IntersectionObserver.disconnect()`
+- `disconnect()`
   : 모든 타깃 요소에 대한 관찰을 멈추고 싶을 때 사용합니다.
 
-- `IntersectionObserver.takerecords(targetElement)`
+- `takerecords(targetElement)`
   : IntersectionObserverEntry 인스턴스로 이루어진 배열을 반환합니다.
 
 ## 🍫 실제 적용 케이스

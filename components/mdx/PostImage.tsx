@@ -1,3 +1,4 @@
+/* thumbnail : 1032 x 750 */
 import { MdxImageProps } from "@type/mdx";
 
 const PostImage = ({ src, width, caption }: MdxImageProps) => {

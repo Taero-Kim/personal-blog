@@ -1,0 +1,539 @@
+---
+title: Recoil 소개
+date: 2022.11.25
+author: hulk
+slogan: 즐겁게 코딩하고 항상 성장하고 싶은 개발자입니다.
+tags: "#recoil #state"
+category: tech
+content: Recoil에는 크게 두 가지 핵심 콘셉트가 있습니다. 바로 Atom과 Selector입니다. Atom은 Recoil에서 데이터를 보관하는 기본 단위입니다. 컴포넌트에서 Atom을 구독하고 업데이트할 수 있습니다.
+thumbnail: https://cdn.discordapp.com/attachments/1002228584401870871/1045738562710159360/recoil-resize.png
+---
+
+이번 포스팅에서는 상태 관리 라이브러리 중 하나인 Recoil에 대해 소개해 드리려 합니다.
+
+본격적으로 Recoil 라이브러리를 얘기하기 전에,<br />
+상태 관리에 대해서 간단히 생각해보고, 왜 React 자체적으로 제공하는 상태관리 api들로는 부족한지 천천히 짚어보겠습니다.
+
+## 상태 관리란?
+
+- 변화하는 데이터를 관리하는 것
+
+사실 복잡하게 생각할 것 없이 심플한 개념입니다.
+ 이렇게 변화하는 데이터에 따라 프론트에서는 적절하게 UI를 변경하는 등의 작업을 수행합니다.
+
+## 상태의 구분
+
+사실 상태를 구분하는 기준은 다양합니다. 저는 **범위**를 기준으로 나누어보려 합니다.
+
+- **Local state**<br />
+: 데이터가 변경되어서 하나의 컴포넌트에 속하는 ui 등에 영향을 미치는 상태입니다.
+유저가 인풋에 입력하는 텍스트라던지, 토글 버튼 같은게 먼저 떠오르네요.
+
+- **Cross-component state**<br />
+: 하나의 컴포넌트가 아니라 다수의 컴포넌트에 영향을 미치는 상태입니다.
+일반적으로 모달이나 드로어 같은 것들이 있죠.
+
+- **App-wide state**<br />
+: 앱의 모든 컴포넌트에 전반적으로 영향을 미치는 상태입니다.
+사용자 인증같이 앱의 전반에 영향을 주는 것이 속하죠.
+
+위 3가지 상태 모두 `React`에서 기본적으로 제공해주는 `useState`나 `useReducer`를 활용하고,
+컴포넌트들 간 props를 통해 이런 값들을 전달할 수 있습니다. 이것이 문제가 있는 것도 아닙니다.
+지극히 자연스럽고 정상적인 패턴이죠.
+
+### 하지만
+종종 Cross-component state나 App-wide state에서는 이런 props 전달과, 상태의 업데이트 등이 번거로울 수 있습니다. <br />
+또한 실제로 특정 state를 사용하지도 않는데, 단순히 부모 컴포넌트에서 받은 props를 하위 컴포넌트로 전달하기 위해 props를 받는 경우도 있습니다.
+이런 문제를 props drilling이라고 부르기도 합니다.
+
+<PostImage
+  src="https://cdn.discordapp.com/attachments/1002228584401870871/1045703978157092884/2022-11-10_6.38.42.png"
+  width={500}
+  caption="props drilling"
+/>
+
+## Context API : Props drilling의 대안
+
+React에서는 그래서 이런 Props drilling 문제를 해결하려고 자체적으로 context api를 제공합니다.<br />
+이번 포스팅의 메인 주제는 아니니 간단하게 요약만 하고 넘어가겠습니다.
+
+1. 먼저 `createContext`로 기본 컨텍스트 객체를 생성합니다.
+2. 1번에서 생성된 컨텍스트 객체에는 특별한 컴포넌트가 포함되어 있습니다. 바로 `Context.Provider`와 `Context.Consumer`입니다.
+3. Provider를 통해 생성된 컨텍스트를 공급합니다.
+4. Provider 컴포넌트의 자식 Consumer는 컨텍스트를 공급 받고, 접근 가능해집니다.
+
+이렇게 만들어진 컨텍스트는 아래 예시 코드처럼 <br />
+Provider 컴포넌트 안에 Consumer 컴포넌트를 정의하여 사용하는 방법이 있고, <br />
+`useContext`훅을 사용하는 방법이 있습니다.
+
+```js
+import React from 'react';
+
+/* Context 객체 생성 */
+const SomeContext = React.createContext()
+
+/* Provider, Consumer 컴포넌트 사용 */
+<SomeContext.Provider>
+	<SomeContext.Consumer>
+		{(context) => {
+			<div>{context.something}</div>
+		}}
+	</SomeContext.Consumer>	
+</SomeContext.Provider>
+
+or
+...
+/* useContext hook 사용 */
+const context = useContext(SomeContext);
+
+return (
+   <div>{context.something}</div>
+)
+...
+```
+
+<PostImage
+  src="https://cdn.discordapp.com/attachments/1002228584401870871/1045708743540748349/2022-11-10_10.16.02.png"
+  width={500}
+  caption="context 사용"
+/>
+
+이렇게 props drilling의 문제는 어느정도 해결이 된 것 같습니다.
+하지만 Context API도 잠재적인 단점이 있습니다.
+
+## Context API: 아쉬운 점
+
+- 설정의 복잡성 <br />
+: 물론 작은 Context 하나를 만들어 사용하는 것이라면 그렇게 복잡하지 않다고 생각할 수도 있습니다.<br />
+하지만 여러가지 다양한 상태를 모두 하나의 거대한 Context 에서 관리한다면?<br />
+맥락이 분리되지 않아 보기도 힘들고, 관리하기도 만만치 않을 것입니다.<br />
+그렇다고, Context를 맥락에 맞게 구분하자니 아래와 같이 심하게 중첩된 JSX 코드를 만나게 될 것입니다.
+```js
+<FirstContext.Provider>
+	<SecondContext.Provider>
+		<ThirdContext.Provider>
+			<FourthContext.Provider>
+				<FifthContext.Provider>
+						...
+						<App />
+						...
+				</FifthContext.Provider>
+			</FourthContext.Provider>
+		</ThirdContext.Provider>
+	</SecondContext.Provider>
+</FirstContext.Provider>
+```
+
+- 성능 이슈 (리렌더링) <br />
+: Context에 있는 값이 하나라도 변경되면, 그것을 구독하고 있는 컴포넌트가 전부 재렌더링 됩니다.<br />
+설사 그 값을 쓰지 않을지라도요. 물론 `React.memo`등을 써서 최적화 시키는 건 논지와는 벗어난 얘기 같으니 넘어가도록 하겠습니다.
+
+이러한 이슈들 때문에, 이제부터 소개해 드릴 Recoil 같은 외부 상태 관리에 대한 수요가 생긴 것입니다. <br />
+하지만 `Context API`를 쓰는게 꼭 잘못되었다는 것은 아닙니다. <br />
+충분히 상황에 따라 `Context API`도 잘 활용될 수 있다고 생각합니다. <br />
+또한 이는 둘 중 하나만을 선택해야 하는 취사 선택의 문제가 아닙니다. 둘 다 혼용해서 사용하는 것도 충분히 가능합니다.
+
+아무튼 이러한 배경을 먼저 이해한 상태로 이제 `Recoil`라이브러리에 대해서 얘기해 보겠습니다.
+
+-------
+
+![](https://cdn.discordapp.com/attachments/1002228584401870871/1045719815509250099/2022-11-11_3.30.33.png)
+
+## 왜 Recoil인가?
+
+- `Context API`의 기능상 한계 극복 <br />
+: 먼저 아래에서 언급드릴 개념들로 `Context API`가 가지고 있는 기능상 잠재적인 단점을 커버해줍니다.
+
+- React 친화적 <br />
+: `React`를 개발한 페이스북(메타) 팀에서 개발했습니다. 따라서 `React`의 hook들과 인터페이스가 거의 유사하고, 가장 잘 어울립니다.
+
+- 부속 라이브러리 최소화 <br />
+: 본 라이브러리에 대부분의 기능이 내장되어 있어, 추가적인 기능을 위하여 설치해야 하는 라이브러리가 없습니다. 가령 Redux와 자주 사용하는 thunk나 saga등과 같이 말이죠.
+
+- 적은 보일러 플레이트 <br />
+: 작성해야 하는 보일러 플레이트가 압도적으로 적습니다.
+
+## Recoil의 접근 방법  
+
+<PostImage
+  src="https://cdn.discordapp.com/attachments/1002228584401870871/1045708743540748349/2022-11-10_10.16.02.png"
+  width={500}
+  caption="recoil 접근 방법"
+/>
+
+- `Recoil`은 `React` 트리에 다이렉트로 연결되는 형태로 존재하는 위와 같은 형태로 구성되어 있습니다. <br />
+`Recoil`에서 변경되는 데이터는 위 사진의 그래프처럼 개별적인 컴포넌트로 흘러 들어갑니다.
+
+- 기존의 `Redux`는 `Redux`라는 외부 스토어가 있고, `React`가 있고, 그것을 `react-redux`라는 라이브러리를 통해 제어하는 반면,<br />
+`Recoil`은 그런 역할을 하는 매개체가 없어도 자체적으로 상태 관리 및 전달이 가능합니다.
+
+## Recoil의 핵심 콘셉트
+
+`Recoil`에는 크게 두 가지 핵심 콘셉트가 있습니다. 바로 `Atom`과 `Selector`입니다.
+
+### Atom
+- `Recoil`에서 데이터를 보관하는 기본 단위입니다.
+- 컴포넌트에서 Atom을 구독하고 업데이트할 수 있습니다.
+
+```js
+const fontSizeState = atom({
+  key: 'fontSizeState',
+  default: 14,
+});
+
+function FontButton() {
+  const [fontSize, setFontSize] = useRecoilState(fontSizeState);
+
+  return (
+    <button onClick={() => setFontSize((size) => size + 1)} style={{fontSize}}>
+      Click to Enlarge
+    </button>
+  );
+}
+```
+
+### Selector 
+- `Selector`는 `atom`이나 다른 `selector`에 변화가 생길 때마다 새로운 값을 리턴해주는 순수 함수입니다.
+- 파생되는 상태를 생성해주는 역할을 합니다. 가령, A와 B의 상태를 가지고, A와 B의 상태에 의존하는 C라는 상태를 만드는 것이죠.
+- `selector`는 의존성에 해당하는 `atom`이 업데이트되면 같이 업데이트 됩니다.
+- 컴포넌트에서는 `atom`뿐만 아니라, `selector를 구독할 수 도 있습니다.
+
+```js
+const fontSizeLabelState = selector({
+  key: 'fontSizeLabelState',
+  get: ({get}) => {
+    const fontSize = get(fontSizeState); // 의존성
+    const unit = 'px';
+
+    return `${fontSize}${unit}`;
+  },
+});
+
+function FontButton() {
+  const [fontSize, setFontSize] = useRecoilState(fontSizeState);
+  const fontSizeLabel = useRecoilValue(fontSizeLabelState); // selector
+
+  return (
+    <>
+      <div>Current font size: ${fontSizeLabel}</div>
+
+      <button onClick={setFontSize(fontSize + 1)} style={{fontSize}}>
+        Click to Enlarge
+      </button>
+    </>
+  );
+}
+```
+참고로 `Recoil`에서는 `atom`에 최소한의 상태 집합만 정의하고, 다른 모든 파생 데이터는 `selector`를 통해 효율적으로 계산하기를 권장하고 있습니다. <br />
+불필요하게 많은 상태를 보존하고 있는 것을 방지하기 위해서죠.
+
+## Recoil 핵심 api 체험
+
+- **useRecoilValue** : 컴포넌트에서 atom 값을 가져옵니다.
+
+```js
+// atom 생성
+const todoListState = atom({
+  key: 'todoListState',
+  default: [],
+});
+
+function TodoList() {
+  // useRecoilValue
+  // function useRecoilValue<T>(state: RecoilValue<T>): T;
+  const todoList = useRecoilValue(todoListState);
+
+  return (
+    <>
+      {/* <TodoListStats /> */}
+      {/* <TodoListFilters /> */}
+      <TodoItemCreator />
+
+      {todoList.map((todoItem) => (
+        <TodoItem key={todoItem.id} item={todoItem} />
+      ))}
+    </>
+  );
+}
+```
+
+위 코드처럼 atom()을 통해 `atom`을 생성할 수 있습니다.<br /> 각 atom은 고유한 `key`가 필요하고 default 값을 지정할 수 있습니다.<br />
+`useRecoilValue`는 특정 `key`이 정의된 `atom` 값(현재 상태값)을 가져올 수 있는 hook입니다.
+
+- **useSetRecoilState** : 컴포넌트에서 atom의 값을 업데이트 시킬 수 있습니다.
+
+```js
+function TodoItemCreator() {
+  const [inputValue, setInputValue] = useState('');
+
+  const setTodoList = useSetRecoilState(todoListState);
+
+  const addItem = () => {
+    setTodoList((oldTodoList) => [
+      ...oldTodoList,
+      {
+        id: getId(),
+        text: inputValue,
+        isComplete: false,
+      },
+    ]);
+    setInputValue('');
+  };
+
+  const onChange = ({target: {value}}) => {
+    setInputValue(value);
+  };
+
+  return (
+    <div>
+      <input type="text" value={inputValue} onChange={onChange} />
+      <button onClick={addItem}>Add</button>
+    </div>
+  );
+}
+
+// 고유한 Id 생성을 위한 유틸리티
+let id = 0;
+function getId() {
+  return id++;
+} 
+```
+
+```js
+  function useSetRecoilState<T>(state: RecoilState<T>): SetterOrUpdater<T>;
+  type SetterOrUpdater<T> = (T | (T => T)) => void;
+```
+
+`useSetRecoilState`를 보면 기존 `React.useState`의 `set`함수와 거의 동일한 인터페이스를 가지고 있는 것을 확인할 수 있습니다.
+
+- **useRecoilState** : useRecoilValue와 useSetRecoilState를 합친 것이라고 생각하시면 됩니다.
+
+```js
+function TodoItem({item}) {
+
+  // useRecoilValue, useSetRecoilState 같이 사용
+  const [todoList, setTodoList] = useRecoilState(todoListState);
+	//function useRecoilState<T>(state: RecoilState<T>): [T, SetterOrUpdater<T>];
+	// type SetterOrUpdater<T> = (T | (T => T)) => void;
+
+  const index = todoList.findIndex((listItem) => listItem === item);
+
+  const editItemText = ({target: {value}}) => {
+    const newList = replaceItemAtIndex(todoList, index, {
+      ...item,
+      text: value,
+    });
+
+    setTodoList(newList);
+  };
+
+  const toggleItemCompletion = () => {
+    const newList = replaceItemAtIndex(todoList, index, {
+      ...item,
+      isComplete: !item.isComplete,
+    });
+
+    setTodoList(newList);
+  };
+
+  const deleteItem = () => {
+    const newList = removeItemAtIndex(todoList, index);
+
+    setTodoList(newList);
+  };
+
+  return (
+    <div>
+      <input type="text" value={item.text} onChange={editItemText} />
+      <input
+        type="checkbox"
+        checked={item.isComplete}
+        onChange={toggleItemCompletion}
+      />
+      <button onClick={deleteItem}>X</button>
+    </div>
+  );
+}
+
+function replaceItemAtIndex(arr, index, newValue) {
+  return [...arr.slice(0, index), newValue, ...arr.slice(index + 1)];
+}
+
+function removeItemAtIndex(arr, index) {
+  return [...arr.slice(0, index), ...arr.slice(index + 1)];
+}
+```
+
+위 코드를 보시면 기존 `React.useState` 와 인터페이스가 거의 동일한 것을 확인하실 수 있습니다. <br />
+그냥 기존에 `React`에서 쓰던 방식으로 사용할 수 있어 위화감이 전혀 없습니다.
+
+여기까지가 `Recoil`의 가장 기본적인 api였습니다. <br />
+하지만 `Recoil`에는 이것 외에도 정말 유용하게 쓸 수 있는 API들이 많습니다,
+
+## 기타 API
+- **useResetRecoilState**: atom 값을 초기화 시킵니다.
+```js
+function useResetRecoilState<T>(state: RecoilState<T>): () => void;
+
+useResetRecoilState(someState);
+```
+
+- **useRecoilCallback**:  의존성에 따라 갱신되는 메모이제이션 된 함수를 생성합니다.
+```js
+type CallbackInterface = {
+  snapshot: Snapshot,
+  gotoSnapshot: Snapshot => void,
+  set: <T>(RecoilState<T>, (T => T) | T) => void,
+  reset: <T>(RecoilState<T>) => void,
+};
+
+function useRecoilCallback<Args, ReturnValue>(
+  callback: CallbackInterface => (...Args) => ReturnValue,
+  deps?: $ReadOnlyArray<mixed>,
+): (...Args) => ReturnValue
+```
+
+사실 `useRecoilCallback`은 `React.useCallback`과 거의 동일합니다.<br />
+다만, 생성된 함수에 스냅샷과 상태를 다루는 객체와 함수가 함께 전달된다는 점이 다릅니다.
+
+## 추가 사항
+- `atom`은 비동기로도 상태 초기화가 가능합니다.<br />
+
+아래 코드의 atom 생성부 객체의 default의 타입을 보시면 Promise가 있는 것을 확인하실 수 있습니다.<br />
+따라서 충분히 비동기로도 상태 초기화가 가능합니다.
+```js
+function atom<T>({
+  key: string,
+  default: T | Promise<T> | RecoilValue<T>,
+
+  // atom 의 effect 는 atom 이 생성될 때 실행되는 사이드 이펙트
+  effects_UNSTABLE?: $ReadOnlyArray<AtomEffect<T>>,
+
+  dangerouslyAllowMutability?: boolean,
+}): RecoilState<T>
+
+1. 
+const currentUserNameQuery = atom({
+  key: 'CurrentUserName',
+  default: async ({get}) => {
+    const response = await myDBQuery({
+      userID: get(currentUserIDState),
+    });
+    return response.name;
+  },
+});
+
+function CurrentUserInfo() {
+  const userName = useRecoilValue(currentUserNameQuery);
+  return <div>{userName}</div>;
+}
+
+const currentUserNameQuery = selector({
+  key: 'CurrentUserName',
+  get: async ({get}) => {
+    const response = await myDBQuery({
+      userID: get(currentUserIDState),
+    });
+    if (response.error) {
+      throw response.error;
+    }
+    return response.name;
+  },
+});
+
+function CurrentUserInfo() {
+  const userName = useRecoilValue(currentUserNameQuery);
+  return <div>{userName}</div>;
+}
+
+function MyApp() {
+  return (
+    <RecoilRoot>
+      <ErrorBoundary>
+        <React.Suspense fallback={<div>Loading...</div>}>
+          <CurrentUserInfo />
+        </React.Suspense>
+      </ErrorBoundary>
+    </RecoilRoot>
+  );
+}
+```
+
+- **atomFamily** : 동일한 형태의 atom을 생성해주는 팩토리 함수를 제공
+
+atomFamily를 사용하면 동일한 인터페이스의 atom들을 생성할 수 있는 함수를 제공 받습니다. <br />
+
+```js
+/* 1번 */
+const postList = atom<Post[]>({
+  key: "postList",
+  default: [],
+  ...
+})
+
+/* 2번 */
+--------------------------------
+const post1Atom = atom<Post>({
+  key: "post1",
+  ...
+})
+
+const post2Atom = atom<Post>({
+  key: "post2",
+  ...
+})
+
+...
+
+--------------------------------
+/* 3번 */
+const postsAtomFamily = atomFamily<Post, PostId>({
+  key: "postsAtomFamily",
+  default: (id) => ({
+    id,
+    ...
+  }),
+})
+----------------------------------
+
+const [myPost, setMyPost] = useRecoilState(postsAtomFamily("myPost"));
+const [yourPost, setYourPost] = useRecoilState(postsAtomFamily("yourPost"));
+```
+
+- **useRecoilRefresher** : `atom`과 별개로 selector의 값을 필연적으로 갱신해주고 싶을때 사용합니다.
+
+```js
+import { RecoilValue, useRecoilRefresher } from 'recoil';
+                                      // 셀렉터
+const useRecoilCacheRefresh = (state: RecoilValue<any>) => {
+  const refresher = useRecoilRefresher(state);
+  return refresher;
+};
+
+export default useRecoilCacheRefresh;
+```
+
+## 아쉬운 부분
+
+아주 간단하게만 살펴봤지만, `Recoil`에는 소개드린 api 이외에도 정말 다양한 기능이 있습니다. <br />
+물론 아쉬운 부분도 존재합니다.
+
+- 일부 api가 아직 실험단계에 있습니다.
+- `Redux`와 비교해서 뭔가 메인 스트림은 아닌 것 같은 느낌은 있습니다.
+그럼에도 `Redux`와도 충분히 경쟁관계에 있고 더 가볍다고 생각합니다.
+- 공식적인 devtool이 없어 불편합니다.
+
+그럼에도 `Recoil`이 가지고 있는 장점들이 이런 아쉬운 부분을 상쇄하고도 남기 때문에, `React`기반의 프로젝트에서 굉장히 좋은 선택지라고 생각합니다.
+
+## 마치며
+오늘은 간단하게 `Recoil`의 콘셉트 위주로 살펴봤습니다.<br />
+추후 포스팅에서 `Recoil`에서 사용되는 api들에 대한 보다 자세한 소개를 하도록 하겠습니다.
+
+### 레퍼런스
+
+[Recoil 공식 docs](https://recoiljs.org/ko/docs/introduction/installation) <br />
+[Recoil 튜토리얼 해보기 좋은 한국어 영상 #1 (12분)](https://www.youtube.com/watch?v=t934FOlOMoM) <br />
+[Recoil 튜토리얼 해보기 좋은 한국어 영상 #2 (20분)](https://www.youtube.com/watch?v=7nwpEiSpPqY)<br />
+
+[튜토리얼 코드 playground (세팅부터 기본 사용까지 체험 가능)](https://app.sideguide.dev/recoil/tutorial)<br />
+[참고 블로그 : junglast](https://junglast.com/blog/recoil-atomfamily-atom)<br />
